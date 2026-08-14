@@ -1,0 +1,190 @@
+<!-- Design System -->
+<!DOCTYPE html>
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>The Journal - Article</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-container-low": "#f4f4f0", "surface-container-highest": "#e3e3df", "on-secondary-fixed-variant": "#474744",
+                      "surface-dim": "#dadad7", "inverse-primary": "#accfb6", "on-tertiary-fixed": "#301215", "on-secondary": "#ffffff",
+                      "on-primary-fixed-variant": "#2f4d3a", "secondary-fixed": "#e5e2de", "on-primary-fixed": "#022111", "tertiary-fixed-dim": "#efb9bc",
+                      "inverse-on-surface": "#f1f1ed", "surface-bright": "#faf9f6", "surface-container": "#eeeeeb", "tertiary-container": "#512d30",
+                      "outline": "#727972", "surface-container-lowest": "#ffffff", "primary": "#082717", "secondary-fixed-dim": "#c9c6c3",
+                      "on-secondary-fixed": "#1c1c1a", "on-error-container": "#93000a", "on-surface-variant": "#424843", "primary-container": "#1f3d2b",
+                      "background": "#faf9f6", "surface-container-high": "#e8e8e5", "tertiary": "#38181b", "error": "#ba1a1a",
+                      "on-surface": "#1a1c1a", "primary-fixed-dim": "#accfb6", "secondary-container": "#e5e2de", "on-tertiary-fixed-variant": "#633c3f",
+                      "tertiary-fixed": "#ffdadb", "secondary": "#5f5e5c", "on-primary": "#ffffff", "on-secondary-container": "#656461",
+                      "on-background": "#1a1c1a", "on-tertiary": "#ffffff", "on-error": "#ffffff", "on-primary-container": "#87a890",
+                      "on-tertiary-container": "#c69497", "surface": "#faf9f6", "primary-fixed": "#c8ebd1", "surface-variant": "#e3e3df",
+                      "outline-variant": "#c2c8c1", "inverse-surface": "#2f312f", "error-container": "#ffdad6", "surface-tint": "#466551"
+              },
+              "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+              "spacing": { "max-reading-width": "680px", "section-gap": "5rem", "margin-safe": "2rem", "gutter": "1.5rem", "element-gap": "1.5rem" },
+              "fontFamily": {
+                      "ui-label-lg": ["Inter"], "headline-md": ["\"Source Serif 4\""], "display-lg": ["\"Source Serif 4\""],
+                      "ui-meta": ["Inter"], "headline-lg": ["\"Source Serif 4\""], "ui-label-md": ["Inter"], "article-body": ["\"Source Serif 4\""]
+              },
+              "fontSize": {
+                      "ui-label-lg": ["0.875rem", { "lineHeight": "1.2", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                      "headline-md": ["1.5rem", { "lineHeight": "1.3", "fontWeight": "600" }],
+                      "display-lg": ["clamp(2.5rem, 8vw, 4rem)", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                      "ui-meta": ["0.75rem", { "lineHeight": "1.4", "fontWeight": "400" }],
+                      "headline-lg": ["clamp(1.75rem, 5vw, 2.5rem)", { "lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                      "ui-label-md": ["0.8125rem", { "lineHeight": "1.4", "fontWeight": "400" }],
+                      "article-body": ["1.125rem", { "lineHeight": "1.65", "fontWeight": "400" }]
+              }
+            },
+          }
+        }
+    </script>
+<style>
+        body { background-color: #faf9f6; color: #1a1c1a; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+        .hairline-b { border-bottom: 1px solid #c2c8c1; }
+        .hairline-t { border-top: 1px solid #c2c8c1; }
+        .hairline-l { border-left: 2px solid #1f3d2b; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-article-body selection:bg-primary-container selection:text-on-primary-container min-h-screen flex flex-col">
+<header class="bg-surface dark:bg-surface border-b border-outline-variant dark:border-on-surface-variant w-full px-margin-safe py-4 max-w-[1440px] mx-auto flex justify-between items-center z-50">
+<a class="font-display-lg text-display-lg text-primary dark:text-primary-fixed-dim tracking-tight hover:opacity-80 transition-opacity" href="#">The Journal</a>
+<nav class="hidden md:flex gap-element-gap">
+<a class="font-ui-label-lg text-ui-label-lg text-primary dark:text-primary-fixed-dim border-b-2 border-primary dark:border-primary-fixed-dim pb-1 hover:opacity-80 transition-opacity" href="#">Essays</a>
+<a class="font-ui-label-lg text-ui-label-lg text-secondary dark:text-secondary-fixed-dim hover:text-primary dark:hover:text-primary-fixed-dim transition-colors pb-1" href="#">Archive</a>
+<a class="font-ui-label-lg text-ui-label-lg text-secondary dark:text-secondary-fixed-dim hover:text-primary dark:hover:text-primary-fixed-dim transition-colors pb-1" href="#">About</a>
+</nav>
+<div class="flex items-center gap-4">
+<button aria-label="Search" class="text-primary hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">search</span>
+</button>
+</div>
+</header>
+<main class="flex-grow">
+<div class="w-full h-[614px] max-h-[600px] bg-surface-container-high relative overflow-hidden">
+<img alt="Article Cover" class="w-full h-full object-cover absolute inset-0 mix-blend-multiply opacity-90 grayscale-[20%]" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDlzo4Zng5aJB7Y2xjmmwoZGP4hx78S1vNq-SHtK1__30dQSb728olPRgp4iOQTxqkLWhHN4XX1hSIlWs6_uqk4PW1EpaER5ffm_7KHJNPA9NILZC2WCwvV98mRUJVJuulYnW_q6hGcQDcKMXImCETc0NBeL-Vqp6QVrvDbgxqFQEPPS9e1m5xmR6rJbW0_X9vNYtrOSuLKIByBn3vPOp4q_lBUdCBrfSETsyR-WP40K0Pd2ywPlGoFSg"/>
+</div>
+<article class="max-w-max-reading-width mx-auto px-gutter pt-section-gap pb-section-gap">
+<header class="mb-12">
+<h1 class="font-display-lg text-display-lg text-primary mb-6">The Architecture of Silence in Modern Cities</h1>
+<div class="flex items-center gap-4 font-ui-meta text-ui-meta text-secondary uppercase tracking-wider hairline-t hairline-b py-3">
+<span class="font-semibold text-primary">By Elena Rostova</span>
+<span>•</span>
+<span>October 24, 2024</span>
+<span>•</span>
+<span>8 min read</span>
+</div>
+</header>
+<div class="font-article-body text-article-body space-y-6">
+<p class="first-letter:font-headline-lg first-letter:text-5xl first-letter:float-left first-letter:mr-3 first-letter:mt-1 first-letter:text-primary">Urban landscapes are increasingly defined not just by what is built, but by what is omitted. As cities grow denser and noise pollution reaches critical levels, architects and urban planners are turning to a new priority: the deliberate engineering of quiet spaces. This shift represents a departure from the sensory overload that characterized twentieth-century urban development, moving toward a philosophy where structural restraint is highly prized.</p>
+<p>Consider the acoustic design of public squares. Historically, these areas were designed for resonance, amplifying the voices of commerce and community. Today, materials are selected for their dampening qualities. Porous concrete, vertical gardens, and strategically angled facades work in concert to absorb ambient city hum, creating pockets of stillness amidst chaos.</p>
+<blockquote class="hairline-l pl-6 my-10 font-headline-lg text-headline-lg text-primary italic text-balance">
+                    "Silence is no longer an absence; it is a luxury commodity manufactured through concrete and glass."
+                </blockquote>
+<p>This deliberate curation of sound—or the lack thereof—speaks to a broader cultural longing for calm. When we enter a space that has been designed to hush the city, we experience a physiological response. Heart rates lower. Focus sharpens. The environment feels intentional, almost sacred, not unlike entering a grand library or a quiet gallery.</p>
+<p>However, this manufactured silence raises questions about accessibility. Often, these meticulously engineered quiet zones are confined to high-end developments, corporate campuses, or expensive civic projects. The challenge for future urbanism lies in democratizing this acoustic relief, ensuring that respite from the noise is available to all residents, not just those who can afford entry to curated environments.</p>
+</div>
+<div class="mt-16 pt-8 hairline-t flex justify-between items-center">
+<div class="flex gap-4">
+<button aria-label="Like this article" class="group flex items-center gap-2 px-4 py-2 border border-primary text-primary hover:bg-primary-container hover:text-on-primary-container transition-all duration-200" id="btn-like">
+<span class="material-symbols-outlined text-[20px]" id="icon-like" style="font-variation-settings: 'FILL' 0;">thumb_up</span>
+<span class="font-ui-label-md text-ui-label-md uppercase">Appreciate</span>
+</button>
+</div>
+<div class="flex gap-4">
+<button aria-label="Share" class="text-secondary hover:text-primary transition-colors">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">share</span>
+</button>
+<button aria-label="Bookmark" class="text-secondary hover:text-primary transition-colors">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">bookmark</span>
+</button>
+</div>
+</div>
+<section class="mt-20">
+<h3 class="font-headline-md text-headline-md mb-8">Discussion</h3>
+<form class="mb-12 space-y-6">
+<div class="relative">
+<input class="peer block w-full border-0 border-b border-outline-variant bg-transparent py-2.5 px-0 text-article-body text-on-surface focus:border-primary focus:ring-0 appearance-none transition-colors" id="name" placeholder=" " required="" type="text"/>
+<label class="absolute top-2.5 left-0 -z-10 origin-[0] -translate-y-6 scale-75 transform font-ui-label-lg text-secondary duration-300 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-focus:-translate-y-6 peer-focus:scale-75 peer-focus:text-primary uppercase" for="name">Name</label>
+</div>
+<div class="relative">
+<textarea class="peer block w-full border-0 border-b border-outline-variant bg-transparent py-2.5 px-0 text-article-body text-on-surface focus:border-primary focus:ring-0 appearance-none transition-colors resize-none" id="comment" placeholder=" " required="" rows="3"></textarea>
+<label class="absolute top-2.5 left-0 -z-10 origin-[0] -translate-y-6 scale-75 transform font-ui-label-lg text-secondary duration-300 peer-placeholder-shown:translate-y-0 peer-placeholder-shown:scale-100 peer-focus:-translate-y-6 peer-focus:scale-75 peer-focus:text-primary uppercase" for="comment">Add to the conversation</label>
+</div>
+<button class="font-ui-label-lg text-ui-label-lg uppercase tracking-widest border border-primary text-primary px-6 py-3 hover:bg-primary hover:text-on-primary transition-colors duration-200" type="submit">Submit</button>
+</form>
+<div class="space-y-8">
+<div class="group">
+<div class="flex items-baseline gap-3 mb-2">
+<span class="font-ui-label-lg text-ui-label-lg text-primary">Julian Hayes</span>
+<span class="font-ui-meta text-ui-meta text-secondary">October 25, 2024</span>
+</div>
+<p class="font-article-body text-[1rem] leading-relaxed text-on-surface-variant">The point regarding the commodification of silence is particularly poignant. Look at recent developments in London or New York; the higher you go in a luxury tower, the more you pay, essentially, for acoustic isolation from the street level.</p>
+<div class="hairline-b mt-6 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+</div>
+<div class="group">
+<div class="flex items-baseline gap-3 mb-2">
+<span class="font-ui-label-lg text-ui-label-lg text-primary">M. Rossi</span>
+<span class="font-ui-meta text-ui-meta text-secondary">October 26, 2024</span>
+</div>
+<p class="font-article-body text-[1rem] leading-relaxed text-on-surface-variant">I wonder how public transit fits into this paradigm. Subways are inherently loud, yet they are the arteries of urban movement. Can acoustic engineering realistically tackle infrastructure at that scale?</p>
+<div class="hairline-b mt-6 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+</div>
+</div>
+</section>
+</article>
+<section class="bg-surface-container-low w-full pt-16 pb-section-gap mt-12 border-t border-surface-container-highest">
+<div class="max-w-[1024px] mx-auto px-margin-safe">
+<h3 class="font-headline-md text-headline-md mb-10 text-center">More like this</h3>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
+<a class="group block" href="#">
+<div class="font-ui-meta text-ui-meta text-secondary uppercase mb-2">Urbanism • Sep 12</div>
+<h4 class="font-headline-md text-headline-md group-hover:text-surface-tint transition-colors mb-4 line-clamp-2">Concrete Brutalism and the Softening of Civic Spaces</h4>
+<div class="hairline-b"></div>
+</a>
+<a class="group block" href="#">
+<div class="font-ui-meta text-ui-meta text-secondary uppercase mb-2">Design • Aug 04</div>
+<h4 class="font-headline-md text-headline-md group-hover:text-surface-tint transition-colors mb-4 line-clamp-2">The Tyranny of the Open Plan Office</h4>
+<div class="hairline-b"></div>
+</a>
+</div>
+</div>
+</section>
+</main>
+<footer class="bg-surface dark:bg-surface border-t border-outline-variant dark:border-on-surface-variant flex flex-col md:flex-row justify-between items-center w-full px-margin-safe py-section-gap max-w-max-reading-width mx-auto">
+<nav class="flex gap-6 mb-6 md:mb-0">
+<a class="font-ui-meta text-ui-meta text-on-secondary-container dark:text-on-secondary-fixed-variant hover:text-primary dark:hover:text-primary-fixed-dim transition-colors focus:underline decoration-1 uppercase" href="#">Privacy Policy</a>
+<a class="font-ui-meta text-ui-meta text-on-secondary-container dark:text-on-secondary-fixed-variant hover:text-primary dark:hover:text-primary-fixed-dim transition-colors focus:underline decoration-1 uppercase" href="#">Terms of Service</a>
+<a class="font-ui-meta text-ui-meta text-on-secondary-container dark:text-on-secondary-fixed-variant hover:text-primary dark:hover:text-primary-fixed-dim transition-colors focus:underline decoration-1 uppercase" href="#">Contact</a>
+<a class="font-ui-meta text-ui-meta text-on-secondary-container dark:text-on-secondary-fixed-variant hover:text-primary dark:hover:text-primary-fixed-dim transition-colors focus:underline decoration-1 uppercase" href="#">RSS</a>
+</nav>
+<div class="font-ui-meta text-ui-meta text-secondary dark:text-secondary-fixed-dim">
+            © 2024 The Journal Editorial. All rights reserved.
+        </div>
+</footer>
+<script>
+        const btnLike = document.getElementById('btn-like');
+        const iconLike = document.getElementById('icon-like');
+        let isLiked = false;
+        btnLike.addEventListener('click', () => {
+            isLiked = !isLiked;
+            if(isLiked) {
+                btnLike.classList.remove('text-primary', 'border-primary');
+                btnLike.classList.add('bg-primary-container', 'text-on-primary-container', 'border-primary-container');
+                iconLike.style.fontVariationSettings = "'FILL' 1";
+            } else {
+                btnLike.classList.add('text-primary', 'border-primary');
+                btnLike.classList.remove('bg-primary-container', 'text-on-primary-container', 'border-primary-container');
+                iconLike.style.fontVariationSettings = "'FILL' 0";
+            }
+        });
+    </script>
+</body></html>

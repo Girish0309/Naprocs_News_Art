@@ -1,0 +1,207 @@
+/* Custom CSS ported from /design-reference/admin/*.html <style> blocks — these are
+   interaction/animation hooks that don't map cleanly to Tailwind utility classes.
+   Scoped to the (admin) route group only; the public site has its own skin. */
+
+.paper-grain {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+  background-color: theme("colors.admin.surface-bright");
+}
+
+.floating-label-group {
+  position: relative;
+}
+.floating-label-input {
+  width: 100%;
+  padding: 24px 16px 8px 16px;
+  background-color: white;
+  border: 1px solid theme("colors.admin.hairline");
+  border-radius: 8px;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+  outline: none;
+}
+.floating-label-input:focus {
+  /* admin.primary, not the legacy near-black (#0B0B0C) this hardcoded to before —
+     they're close enough to look identical but only one is the actual current token. */
+  border-color: theme("colors.admin.primary");
+  box-shadow: inset 0 0 0 1px theme("colors.admin.primary");
+}
+.floating-label {
+  position: absolute;
+  left: 16px;
+  top: 16px;
+  color: theme("colors.admin.outline");
+  transition: all 0.2s ease-out;
+  pointer-events: none;
+  transform-origin: left top;
+}
+.floating-label-input:focus ~ .floating-label,
+.floating-label-input:not(:placeholder-shown) ~ .floating-label {
+  transform: translateY(-8px) scale(0.85);
+  color: theme("colors.admin.on-surface");
+}
+
+.btn-press {
+  transition:
+    transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.1),
+    background-color 0.2s ease;
+}
+.btn-press:active {
+  transform: scale(0.97);
+}
+
+.totp-container {
+  max-height: 0;
+  overflow: hidden;
+  transition:
+    max-height 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.1),
+    opacity 0.4s ease;
+  opacity: 0;
+}
+.totp-container.expanded {
+  max-height: 160px;
+  opacity: 1;
+  margin-top: 16px;
+}
+
+.spring-ease {
+  transition-timing-function: cubic-bezier(0.175, 0.885, 0.32, 1.1);
+}
+.spring-transition {
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+}
+.fade-transition {
+  transition: all 0.3s ease-in-out;
+}
+
+.row-hover-effect {
+  position: relative;
+}
+.row-hover-effect::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 0px;
+  background-color: theme("colors.admin.primary");
+  transition: width 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+}
+.row-hover-effect:hover::before {
+  width: 4px;
+}
+
+.ripple-btn {
+  position: relative;
+  overflow: hidden;
+}
+.ripple-btn::after {
+  content: "";
+  position: absolute;
+  width: 100px;
+  height: 100px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  transform: scale(0);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform 0.5s ease-out,
+    opacity 0.5s ease-out;
+  left: var(--x, 50%);
+  top: var(--y, 50%);
+  transform-origin: center;
+}
+.ripple-btn:active::after {
+  transform: scale(4) translate(-50%, -50%);
+  opacity: 1;
+  transition: 0s;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.border-hairline {
+  border-color: theme("colors.admin.hairline");
+}
+
+.pulse-border-anim {
+  animation: pulse-border 1.5s infinite;
+}
+@keyframes pulse-border {
+  0% {
+    border-color: theme("colors.admin.hairline");
+  }
+  50% {
+    border-color: theme("colors.admin.primary");
+  }
+  100% {
+    border-color: theme("colors.admin.hairline");
+  }
+}
+
+.checkmark-draw {
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  animation: draw 0.5s ease-in-out forwards;
+}
+@keyframes draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* .success is toggled on click; width/border-radius/background-color animate via the
+   spring-transition class already present on the button in markup. The mockup's own
+   arbitrary Tailwind class had a typo (`ease-[conic-bezier(...)]` — conic-bezier isn't a
+   real CSS timing function, only conic-gradient is; that class silently no-ops in the
+   original mockup). We use `.spring-transition` here instead, which has the real curve. */
+.morph-button.success {
+  width: 48px;
+  border-radius: 50%;
+  background-color: theme("colors.admin.primary");
+  color: transparent;
+}
+.morph-button.success .btn-text {
+  display: none;
+}
+.morph-button.success .btn-icon {
+  display: block;
+  color: theme("colors.admin.surface-bright");
+}
+
+.comment-row {
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+  overflow: hidden;
+}
+.comment-row.removing {
+  height: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  opacity: 0;
+  border-bottom-width: 0 !important;
+}
+
+/* @keyframes shimmer itself lives in globals.css (shared root stylesheet, loaded on
+   every page including admin) — this is the admin-toned variant of it; the
+   journal-toned one (globals.css's own .shimmer-journal) is what public loading.tsx
+   skeletons use instead, same animation, different palette. */
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    theme("colors.admin.surface-container") 25%,
+    theme("colors.admin.surface-container-high") 50%,
+    theme("colors.admin.surface-container") 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+.progress-bar-ease {
+  transition: width 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+}

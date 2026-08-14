@@ -1,0 +1,231 @@
+<!-- New Article | The Editorial -->
+<!DOCTYPE html>
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>The Editorial - Article Editor</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary-fixed": "#1c1b1c", "on-tertiary-container": "#a27e3b", "on-tertiary-fixed-variant": "#5e4100",
+                        "surface-bright": "#faf9f6", "primary": "#000000", "surface-tint": "#5f5e5f", "primary-fixed": "#e5e2e3",
+                        "primary-container": "#1c1b1c", "secondary": "#5d5f5e", "on-secondary-container": "#616362", "on-secondary": "#ffffff",
+                        "outline": "#77777b", "on-primary-container": "#858384", "surface-container-high": "#e9e8e5", "surface": "#faf9f6",
+                        "on-surface-variant": "#46464a", "tertiary": "#000000", "secondary-fixed-dim": "#c6c7c6", "background": "#faf9f6",
+                        "tertiary-fixed": "#ffdea9", "surface-dim": "#dbdad7", "surface-container": "#efeeeb", "surface-variant": "#e3e2df",
+                        "primary-fixed-dim": "#c8c6c7", "surface-container-low": "#f5f3f0", "on-error-container": "#93000a", "on-background": "#1b1c1a",
+                        "surface-container-highest": "#e3e2df", "inverse-on-surface": "#f2f1ed", "on-tertiary": "#ffffff", "secondary-fixed": "#e2e2e2",
+                        "surface-container-lowest": "#ffffff", "tertiary-container": "#271900", "on-secondary-fixed": "#1a1c1c", "tertiary-fixed-dim": "#ebc076",
+                        "on-error": "#ffffff", "inverse-primary": "#c8c6c7", "on-secondary-fixed-variant": "#454747", "on-primary-fixed-variant": "#474647",
+                        "inverse-surface": "#30312f", "error": "#ba1a1a", "on-surface": "#1b1c1a", "on-tertiary-fixed": "#271900",
+                        "outline-variant": "#c7c6ca", "secondary-container": "#dfe0df", "on-primary": "#ffffff", "error-container": "#ffdad6"
+                    },
+                    "borderRadius": { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                    "spacing": { "md": "24px", "lg": "48px", "xl": "80px", "base": "8px", "xs": "4px", "container-max": "1280px", "article-max": "680px", "sm": "12px" },
+                    "fontFamily": {
+                        "meta-caps": ["Inter"], "headline-md": ["\"Source Serif 4\""], "headline-lg": ["\"Source Serif 4\""],
+                        "ui-label-lg": ["Inter"], "article-body": ["\"Source Serif 4\""], "ui-label-md": ["Inter"],
+                        "ui-label-sm": ["Inter"], "display-lg": ["\"Source Serif 4\""]
+                    },
+                    "fontSize": {
+                        "meta-caps": ["11px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "ui-label-lg": ["16px", { "lineHeight": "24px", "fontWeight": "600" }],
+                        "article-body": ["18px", { "lineHeight": "30px", "fontWeight": "400" }],
+                        "ui-label-md": ["14px", { "lineHeight": "20px", "fontWeight": "500" }],
+                        "ui-label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .spring-transition { transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.1); }
+        .fade-transition { transition: all 0.3s ease-in-out; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        [contenteditable]:empty:before { content: attr(data-placeholder); color: #77777b; pointer-events: none; display: block; }
+        .border-hairline { border-color: #e5e4e1; }
+        .pulse-border-anim { animation: pulse-border 1.5s infinite; }
+        @keyframes pulse-border { 0% { border-color: #e5e4e1; } 50% { border-color: #000000; } 100% { border-color: #e5e4e1; } }
+        .checkmark-draw { stroke-dasharray: 100; stroke-dashoffset: 100; animation: draw 0.5s ease-in-out forwards; }
+        @keyframes draw { to { stroke-dashoffset: 0; } }
+        .morph-button.success { width: 48px; border-radius: 50%; background-color: #000000; color: transparent; }
+        .morph-button.success .btn-text { display: none; }
+        .morph-button.success .btn-icon { display: block; color: #faf9f6; }
+    </style>
+</head>
+<body class="bg-background text-on-background font-article-body antialiased flex flex-col md:flex-row h-screen overflow-hidden">
+<nav class="hidden md:flex flex-col bg-surface dark:bg-surface-container w-64 h-full border-r border-hairline py-lg px-md z-40 transition-all duration-200 ease-in-out">
+<div class="mb-lg">
+<h1 class="font-headline-md text-headline-md text-primary dark:text-on-primary-fixed">The Editorial</h1>
+<p class="font-ui-label-sm text-ui-label-sm text-on-surface-variant mt-xs">Newsletter Console</p>
+</div>
+<button class="w-full mb-lg py-sm px-md bg-primary text-on-primary rounded-DEFAULT font-ui-label-md text-ui-label-md spring-transition hover:bg-surface-tint">
+            New Draft
+        </button>
+<div class="flex-1 flex flex-col gap-sm">
+<a class="flex items-center gap-md px-sm py-sm rounded-DEFAULT text-on-surface-variant dark:text-on-secondary-container hover:text-primary dark:hover:text-primary-fixed hover:bg-surface-container-low dark:hover:bg-surface-container-highest transition-colors duration-200 font-ui-label-md text-ui-label-md" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">dashboard</span>
+                Dashboard
+            </a>
+<a class="flex items-center gap-md px-sm py-sm rounded-DEFAULT text-primary dark:text-primary-fixed font-bold relative before:absolute before:left-0 before:w-1 before:h-6 before:bg-primary before:rounded-full transition-all duration-300 ease-[conic-bezier(0.175,0.885,0.32,1.1)] font-ui-label-md text-ui-label-md scale-[0.98]" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">edit_note</span>
+                New Article
+            </a>
+<a class="flex items-center gap-md px-sm py-sm rounded-DEFAULT text-on-surface-variant dark:text-on-secondary-container hover:text-primary dark:hover:text-primary-fixed hover:bg-surface-container-low dark:hover:bg-surface-container-highest transition-colors duration-200 font-ui-label-md text-ui-label-md" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">forum</span>
+                Comments
+            </a>
+<a class="flex items-center gap-md px-sm py-sm rounded-DEFAULT text-on-surface-variant dark:text-on-secondary-container hover:text-primary dark:hover:text-primary-fixed hover:bg-surface-container-low dark:hover:bg-surface-container-highest transition-colors duration-200 font-ui-label-md text-ui-label-md" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">settings</span>
+                Settings
+            </a>
+</div>
+<div class="mt-auto border-t border-hairline pt-md flex flex-col gap-sm">
+<a class="flex items-center gap-md px-sm py-sm rounded-DEFAULT text-on-surface-variant hover:text-primary transition-colors duration-200 font-ui-label-md text-ui-label-md" href="#">
+<span class="material-symbols-outlined">help_outline</span>
+                Support
+            </a>
+<a class="flex items-center gap-md px-sm py-sm rounded-DEFAULT text-on-surface-variant hover:text-primary transition-colors duration-200 font-ui-label-md text-ui-label-md" href="#">
+<span class="material-symbols-outlined">logout</span>
+                Log Out
+            </a>
+<div class="flex items-center gap-sm mt-sm px-sm">
+<img class="w-8 h-8 rounded-full object-cover border border-hairline" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBsk7wEYG6KfMiy7CFgrf4rxDoQ4P0RdXvRamLKHJ6fb-L9j2hU4i6sQP3rhadLyQEmA83f1cz0PCMe9VXVXlSrdV9VeZV8HDLYoPXglQKtHbTwEDks1NsSO2Y5qNxFZNQfijZC0e5Am77VOOBfS_w8Wrcs4A2ri49NxPDLJSCk-6yj8bW0_8ubgohXwi3LobrTg0u8ypEFUGQSBp9j-Ll-hVOdyM-g1Tj_xG8GNPifiBZlYatee6w"/>
+<div class="flex flex-col">
+<span class="font-ui-label-sm text-ui-label-sm text-primary">Admin Profile</span>
+</div>
+</div>
+</div>
+</nav>
+<nav class="md:hidden sticky top-0 z-50 flex justify-between items-center w-full px-lg py-sm bg-surface dark:bg-surface-container-highest border-b border-hairline transition-all duration-200 ease-in-out">
+<span class="font-headline-md text-headline-md text-primary dark:text-on-primary-fixed tracking-tight">The Editorial</span>
+<div class="flex items-center gap-sm">
+<button class="text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200 p-sm rounded-full">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<img class="w-8 h-8 rounded-full object-cover border border-hairline" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDrnfOq8hB4LnJK3k5vb3WnN3jq39AQrwoqnm5BaeFWw2NtpT-ugBNnAnz8haMwCISm3DXt-77MbyXCr9jysfJd4w5OKF5hjHdxYu-eRcthGuxrv4WooNnTbQz_qALQKRd8gPngBBDIwDTo6mnH8vvojufFosDq1rZ77KrO9GbJB_EbWozRjz_9rTzNK-tG6w1jDTocjuQYi-63vJna3LqsmOl7c00iIRlQjErR8qbhPdzC-vfly0E"/>
+</div>
+</nav>
+<main class="flex-1 flex flex-col md:flex-row overflow-hidden bg-background">
+<div class="w-full md:w-3/4 flex flex-col h-full border-r border-hairline relative">
+<header class="flex items-center justify-between px-lg py-sm border-b border-hairline bg-surface-bright sticky top-0 z-10">
+<div class="flex items-center gap-sm text-on-surface-variant">
+<button class="p-sm rounded-DEFAULT hover:bg-surface-container-low hover:text-primary transition-colors duration-200" title="Bold">
+<span class="material-symbols-outlined text-sm">format_bold</span>
+</button>
+<button class="p-sm rounded-DEFAULT hover:bg-surface-container-low hover:text-primary transition-colors duration-200" title="Italic">
+<span class="material-symbols-outlined text-sm">format_italic</span>
+</button>
+<div class="w-px h-4 bg-outline-variant mx-sm"></div>
+<button class="p-sm rounded-DEFAULT hover:bg-surface-container-low hover:text-primary transition-colors duration-200" title="Link">
+<span class="material-symbols-outlined text-sm">link</span>
+</button>
+<button class="p-sm rounded-DEFAULT hover:bg-surface-container-low hover:text-primary transition-colors duration-200" title="Quote">
+<span class="material-symbols-outlined text-sm">format_quote</span>
+</button>
+</div>
+<div class="flex items-center gap-md">
+<div class="flex items-center gap-xs text-on-surface-variant font-ui-label-sm text-ui-label-sm fade-transition" id="autosave-status">
+<span class="status-text">Saved</span>
+<svg class="w-4 h-4 text-primary hidden check-icon" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</div>
+</div>
+</header>
+<div class="flex-1 overflow-y-auto no-scrollbar py-lg px-lg md:px-xl flex justify-center">
+<div class="w-full max-w-[680px] flex flex-col gap-lg pb-xl">
+<input class="w-full bg-transparent border-none outline-none focus:ring-0 font-display-lg text-display-lg text-primary placeholder-outline-variant p-0 mt-lg" id="article-title" placeholder="Article Title" type="text"/>
+<div class="w-full min-h-[512px] outline-none font-article-body text-article-body text-primary-container" contenteditable="true" data-placeholder="Start writing your story here..." id="article-content">
+<p class="mb-md">The modern newsroom relies on a delicate balance between rapid deployment and meticulous editorial oversight.</p>
+</div>
+</div>
+</div>
+</div>
+<aside class="w-full md:w-1/4 h-full bg-surface-bright flex flex-col overflow-y-auto no-scrollbar">
+<div class="p-lg flex flex-col gap-xl">
+<div class="flex justify-between items-center pb-md border-b border-hairline">
+<button class="font-ui-label-md text-ui-label-md text-on-surface-variant hover:text-primary transition-colors">Preview</button>
+<button class="morph-button bg-primary text-surface-bright font-ui-label-md text-ui-label-md px-md py-sm rounded-DEFAULT h-10 flex items-center justify-center transition-all duration-300 ease-[conic-bezier(0.175,0.885,0.32,1.1)] relative" id="publish-btn">
+<span class="btn-text">Publish</span>
+<span class="btn-icon hidden material-symbols-outlined absolute">check</span>
+</button>
+</div>
+<div class="flex flex-col gap-sm">
+<label class="font-meta-caps text-meta-caps text-on-surface-variant">Featured Image</label>
+<div class="w-full h-40 border border-dashed border-outline-variant rounded-DEFAULT bg-surface flex flex-col items-center justify-center gap-sm cursor-pointer hover:bg-surface-container-low transition-colors duration-200" id="drop-zone">
+<span class="material-symbols-outlined text-outline">add_photo_alternate</span>
+<span class="font-ui-label-sm text-ui-label-sm text-on-surface-variant">Drag image here or click</span>
+</div>
+</div>
+<div class="flex flex-col gap-md">
+<div class="flex flex-col gap-xs">
+<label class="font-meta-caps text-meta-caps text-on-surface-variant">Author</label>
+<input class="w-full bg-surface border border-hairline rounded-DEFAULT px-sm py-sm font-ui-label-sm text-ui-label-sm focus:border-primary focus:ring-0 transition-colors" type="text" value="Jane Doe"/>
+</div>
+<div class="flex flex-col gap-xs">
+<label class="font-meta-caps text-meta-caps text-on-surface-variant">Last Modified</label>
+<span class="font-ui-label-sm text-ui-label-sm text-outline">Oct 24, 2023 - 14:32</span>
+</div>
+<div class="flex flex-col gap-xs">
+<label class="font-meta-caps text-meta-caps text-on-surface-variant">Tags</label>
+<input class="w-full bg-surface border border-hairline rounded-DEFAULT px-sm py-sm font-ui-label-sm text-ui-label-sm focus:border-primary focus:ring-0 transition-colors" placeholder="Add tags (comma separated)" type="text"/>
+</div>
+</div>
+</div>
+</aside>
+</main>
+<script>
+        const dropZone = document.getElementById('drop-zone');
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                dropZone.classList.add('pulse-border-anim', 'bg-surface-container-low');
+            });
+        });
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('pulse-border-anim', 'bg-surface-container-low');
+            });
+        });
+        const contentArea = document.getElementById('article-content');
+        const titleInput = document.getElementById('article-title');
+        const statusArea = document.getElementById('autosave-status');
+        const statusText = statusArea.querySelector('.status-text');
+        const checkIcon = statusArea.querySelector('.check-icon');
+        let timeoutId;
+        const triggerSave = () => {
+            clearTimeout(timeoutId);
+            statusText.textContent = 'Saving...';
+            checkIcon.classList.add('hidden');
+            checkIcon.classList.remove('checkmark-draw');
+            timeoutId = setTimeout(() => {
+                statusText.textContent = 'Saved';
+                checkIcon.classList.remove('hidden');
+                void checkIcon.offsetWidth;
+                checkIcon.classList.add('checkmark-draw');
+            }, 1000);
+        };
+        contentArea.addEventListener('input', triggerSave);
+        titleInput.addEventListener('input', triggerSave);
+        const publishBtn = document.getElementById('publish-btn');
+        publishBtn.addEventListener('click', function() {
+            this.classList.add('success');
+            setTimeout(() => {
+                this.classList.remove('success');
+                statusText.textContent = 'Published';
+            }, 600);
+        });
+    </script>
+</body></html>

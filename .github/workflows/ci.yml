@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Lint
+        run: npm run lint
+
+      # Unit + integration suite (Vitest) — runs against an in-memory MongoDB instance
+      # started by tests/setup/global-setup.ts. No repository secrets required: every
+      # env var the app needs (MONGODB_URI, NEXTAUTH_SECRET, ...) is generated
+      # in-process for the test run, and Upstash/Cloudinary are deliberately left
+      # unconfigured (see testing/test-case-matrix.md) — the suite exercises both the
+      # "unconfigured" fallback behavior and, per-route, a controlled test double.
+      - name: Unit + integration tests
+        run: npm test
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      # E2E suite — playwright.config.ts starts its own `next dev` (port 3100) and its
+      # own dedicated in-memory MongoDB instance (port 27118), never the real dev/
+      # production database. CLOUDINARY_MOCK activates lib/cloudinary.ts's test-only
+      # double for the cover-image-upload step (no real Cloudinary account exists —
+      # see DEVIATIONS.md, Module 4).
+      - name: End-to-end tests
+        run: npm run test:e2e
+
+      - name: Upload Playwright report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

@@ -8,8 +8,8 @@ built, audited, hardened, styled, and tested (Modules 1-13; see
 `DEVIATIONS.md`).
 
 **Status as of writing this**: the code is pushed to GitHub
-(`https://github.com/Girish0309/Naprocs_news`, branch `master`, single branch,
-no `main`/`master` ambiguity) but not yet deployed anywhere. Everything below
+(`https://github.com/Girish0309/Naprocs_News_Art`, branch `main`, single
+branch, no `main`/`master` ambiguity) but not yet deployed anywhere. Everything below
 is either done, or is a precise checklist for the parts that need direct
 access to accounts (MongoDB Atlas, a hosting provider) that weren't available
 while writing this. See "What's actually done" at the bottom.
@@ -166,9 +166,11 @@ itself** — not by recreating the account:
 ## 4. Deploying (Vercel)
 
 1. ~~**GitHub**~~ — done: pushed to
-   `https://github.com/Girish0309/Naprocs_news`, branch `master`. `.env.local`
-   was confirmed gitignored (`git check-ignore -v`) before pushing, so no
-   secrets went up with it.
+   `https://github.com/Girish0309/Naprocs_News_Art`, branch `main`.
+   `.env.local` was confirmed gitignored (`git check-ignore -v`) before
+   pushing, so no secrets went up with it. (An earlier push went to a
+   different repo, `Naprocs_news` — superseded by this one; that one can be
+   deleted or left alone, it's not connected to anything.)
 2. **Vercel**: New Project → Import the GitHub repo → Next.js is
    auto-detected (no build command overrides needed) → add the 8 env vars
    from §2 (Production environment; add them to Preview too if preview
@@ -264,8 +266,10 @@ Done directly, without needing any external account:
   `DEVIATIONS.md`'s Module 14 section for why this is two commits and not
   a fabricated thirteen.
 - Created the `origin` remote and pushed to
-  `https://github.com/Girish0309/Naprocs_news` (branch `master`), after
+  `https://github.com/Girish0309/Naprocs_News_Art` (branch `main`), after
   confirming `.env.local` was actually gitignored rather than assuming it.
+  History was rewritten once along the way (per request) to drop the
+  `Co-Authored-By: Claude` trailer from every commit before this final push.
 
 Needs direct account access this session didn't have:
 - MongoDB Atlas dashboard — §3.2's scoped user, and §6's storage check.

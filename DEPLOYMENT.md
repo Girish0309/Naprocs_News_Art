@@ -7,11 +7,12 @@ account." Written at the end of Module 14, after the app itself was already
 built, audited, hardened, styled, and tested (Modules 1-13; see
 `DEVIATIONS.md`).
 
-**Status as of writing this**: the app has NOT been deployed anywhere yet.
-Everything below is either done, or is a precise checklist for the parts that
-need direct access to accounts (MongoDB Atlas, GitHub, a hosting provider)
-that weren't available while writing this. See "What's actually done" at the
-bottom.
+**Status as of writing this**: the code is pushed to GitHub
+(`https://github.com/Girish0309/Naprocs_news`, branch `master`, single branch,
+no `main`/`master` ambiguity) but not yet deployed anywhere. Everything below
+is either done, or is a precise checklist for the parts that need direct
+access to accounts (MongoDB Atlas, a hosting provider) that weren't available
+while writing this. See "What's actually done" at the bottom.
 
 ---
 
@@ -164,13 +165,10 @@ itself** — not by recreating the account:
 
 ## 4. Deploying (Vercel)
 
-1. **GitHub**: this repo needs a remote before Vercel's GitHub integration
-   can see it. `git log` currently has three commits, no `origin` configured.
-   Create an empty GitHub repo, then:
-   ```
-   git remote add origin <repo-url>
-   git push -u origin master
-   ```
+1. ~~**GitHub**~~ — done: pushed to
+   `https://github.com/Girish0309/Naprocs_news`, branch `master`. `.env.local`
+   was confirmed gitignored (`git check-ignore -v`) before pushing, so no
+   secrets went up with it.
 2. **Vercel**: New Project → Import the GitHub repo → Next.js is
    auto-detected (no build command overrides needed) → add the 8 env vars
    from §2 (Production environment; add them to Preview too if preview
@@ -265,10 +263,12 @@ Done directly, without needing any external account:
   the application through Module 12, then Module 13's test suite) — see
   `DEVIATIONS.md`'s Module 14 section for why this is two commits and not
   a fabricated thirteen.
+- Created the `origin` remote and pushed to
+  `https://github.com/Girish0309/Naprocs_news` (branch `master`), after
+  confirming `.env.local` was actually gitignored rather than assuming it.
 
 Needs direct account access this session didn't have:
 - MongoDB Atlas dashboard — §3.2's scoped user, and §6's storage check.
-- Creating/connecting the GitHub repo — no remote existed; §4 step 1.
 - The actual Vercel project creation, env var entry, and deploy trigger —
   by request, left for whoever's driving the actual hosting account.
 - §3.4's admin password rotation and §5's live smoke test — both need the

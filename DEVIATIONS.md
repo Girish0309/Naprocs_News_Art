@@ -806,3 +806,72 @@ reconcile (0 vulnerabilities, matches Module 11's clean audit), `tsc --noEmit` a
   (3/3 passing, reusing this machine's globally-cached Playwright browser install,
   which is genuinely OS-user-scoped rather than project-local) with no `.env.local`
   present anywhere. Deleted the scratch copy afterward.
+
+## Module 14 — Production Deployment
+
+- **No real deployment happened in this module** — by the user's own explicit
+  direction mid-module ("dev will do this so let's skip [the Vercel setup]... make
+  sure it's ready for deployment"), the actual Vercel project creation, env var
+  entry, and deploy trigger were handed off rather than performed. Everything below
+  is either genuinely done, or is a precise, verified-as-much-as-possible checklist
+  for the parts that needed direct account access this session never had.
+- **Real, upfront blockers found and reported rather than worked around**: no
+  GitHub remote configured at all (`git remote -v` empty, `git log` was a single
+  "Initial commit from Create Next App" before this module) — the brief's premise
+  that the repo was "already on GitHub" didn't hold, confirmed by checking rather
+  than assumed; no `gh` CLI installed; no Vercel CLI session (`vercel whoami`
+  returned "Logged out"). None of these can be resolved without the user's actual
+  GitHub/Vercel account access, so they weren't faked or silently skipped — they're
+  called out explicitly in `DEPLOYMENT.md` and were the subject of a direct
+  mid-module question to the user.
+- **Git history is two commits, not thirteen.** The brief asked for "clear,
+  module-referenced commit messages" for Modules 1-13's work — all of which was
+  sitting uncommitted as one flat working-tree snapshot (nothing was ever committed
+  incrementally as each module was built). Manufacturing thirteen separate commits
+  now, by guessing which lines of already-merged, repeatedly-edited files "belong"
+  to which module, would fabricate a false incremental history rather than recover
+  a real one — a file like `components/admin/ArticleForm.tsx` was touched by at
+  least four different modules, and there's no way to un-mix those edits after the
+  fact. Committed as two honest, clearly-labeled commits instead: one for the full
+  application through Module 12, one for Module 13's test suite specifically (which
+  *could* be isolated precisely, since its file set was fully known from having just
+  built it in this same conversation) — each commit message says plainly what it is
+  and, for the first, why it isn't split further.
+- **Real discrepancy found in the brief itself**: step 6 asked to set
+  `NEXT_PUBLIC_SITE_URL` in Vercel "matching NEXTAUTH_URL." Grepped the whole
+  codebase — it's not read anywhere. `lib/site-config.ts`'s `SITE_URL` (used by
+  `sitemap.ts`, `robots.ts`, JSON-LD, canonical/OG tags) reads only `NEXTAUTH_URL`,
+  a deliberate Module 10 decision specifically to avoid two site-URL env vars
+  drifting out of sync. Flagged this in `DEPLOYMENT.md` rather than silently adding
+  an inert env var just because the brief listed it.
+- **Build/runtime readiness was verified for real, not assumed**, using a
+  temporary local MongoDB instance standing in for Atlas (same
+  `mongodb-memory-server` tool used throughout this project's testing, started on
+  a one-off port, torn down after): ran an actual `next build` — confirmed it
+  completes cleanly and that `generateStaticParams` (which needs a real DB
+  connection *at build time* for the `/articles/[slug]` route) succeeds when the
+  database is reachable, which is exactly what would fail first if Vercel's build
+  environment couldn't reach Atlas. Then ran an actual `next start` (production
+  mode) with a realistic non-localhost `NEXTAUTH_URL` and confirmed `sitemap.xml`/
+  `robots.txt` both resolved every URL against that domain — proving the
+  build-time-vs-runtime env var distinction called out in `DEPLOYMENT.md` §2 is
+  actually correct, not just theoretically reasoned about. Also grepped the whole
+  codebase for `@vercel/*` imports, `vercel.json`, `VERCEL_*` env reads, and
+  `export const runtime = "edge"` — none exist anywhere, confirming this app has
+  no Vercel-specific dependency and would run unmodified on any Node.js host.
+- **The new production `NEXTAUTH_SECRET` was generated but deliberately never
+  printed in this conversation** — written directly to a local scratch file
+  instead. Printing a freshly rotated secret in chat would immediately recreate
+  the exact "visible in plaintext in scrollback" problem this module's own item 3
+  exists to fix for the *old* secret. `DEPLOYMENT.md` points to the file and notes
+  it should be deleted once copied into the hosting provider's env var UI.
+- **The admin password rotation (item 4) and the full production smoke test
+  (item 9) are both explicitly left for after a real deployment exists** — neither
+  can happen against something that isn't deployed yet, and the password rotation
+  specifically shouldn't involve anyone pasting the current admin password into
+  this chat either. `DEPLOYMENT.md` §5 has the exact checklist to run once the app
+  is live.
+- **MongoDB Atlas's specific current storage usage (for the M0-ceiling note in
+  item 11) was not checked** — no Atlas dashboard access. `DEPLOYMENT.md` gives
+  the general M0 ceiling (512MB) and exactly where to check current usage, rather
+  than inventing a specific number.

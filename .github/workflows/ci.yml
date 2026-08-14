@@ -19,6 +19,16 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # PageProps/LayoutProps/RouteContext are ambient types Next.js generates on
+      # demand into .next/types/ (via `next dev`, `next build`, or this dedicated
+      # command) — they don't exist in a fresh checkout otherwise, which is exactly
+      # why `tsc --noEmit` failed here despite passing locally (a local `.next/`
+      # from earlier `next dev` runs masked it). `next typegen` produces just the
+      # types, without a full build, so the standalone type-check step below has
+      # something to check against.
+      - name: Generate Next.js route types
+        run: npx next typegen
+
       - name: Type check
         run: npx tsc --noEmit
 

@@ -19,7 +19,6 @@ doc below lives — start with `HANDOVER.md`, not this file.
 - NextAuth.js (credentials provider) — admin-only login, no public signup
 - Upstash Redis — rate limiting (`lib/rate-limit.ts`), with an explicit timeout and a
   documented fail-open-dev/fail-closed-production policy when unreachable
-- otplib + qrcode — TOTP 2FA groundwork (`/api/admin/2fa/setup`), not yet enforced at login
 - Tailwind CSS v3
 - Tiptap — rich text article editor
 - Cloudinary — cover image storage, with an explicit upload timeout
@@ -40,7 +39,7 @@ app/
   (admin)/                Admin console (near-black "Editorial" theme)
     admin.css
     admin/
-      login/               → sign-in page (NextAuth credentials, rate-limited, 2FA groundwork)
+      login/               → sign-in page (NextAuth credentials, rate-limited)
       dashboard/           → article list, All/Published/Drafts filter, search
       articles/new/, articles/[id]/edit/   → the article editor
       comments/            → comment management (All/Flagged tabs, not flagged-only)
@@ -50,8 +49,6 @@ app/
     auth/[...nextauth]/    NextAuth route handler
     admin/
       login/               rate-limit pre-flight check the login form calls before signIn()
-      2fa/setup/           POST — generates + persists a TOTP secret and QR code (groundwork,
-                            not yet enforced at login)
       change-password/     POST
       articles/            GET (list), POST (create)
       articles/[id]/       PUT/PATCH (update), DELETE

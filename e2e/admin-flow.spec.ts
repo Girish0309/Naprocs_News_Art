@@ -21,14 +21,7 @@ test("full admin flow: login, create, upload cover, publish, confirm live", asyn
     await page.goto("/admin/login");
     await page.locator("#email").fill(ADMIN_EMAIL);
     await page.locator("#password").fill(ADMIN_PASSWORD);
-    await page.getByRole("button", { name: "Continue" }).click();
-
-    // Step 2 of LoginForm is a visual-only TOTP step (Module 3: not verified
-    // server-side yet) — any 6-digit value satisfies the client-side `pattern`/
-    // `required` constraints and lets the real signIn() call fire.
-    await expect(page.locator("#totp")).toBeVisible();
-    await page.locator("#totp").fill("123456");
-    await page.getByRole("button", { name: "Verify & Sign In" }).click();
+    await page.getByRole("button", { name: "Sign In" }).click();
 
     await expect(page).toHaveURL(/\/admin\/dashboard$/);
     await expect(page.getByText("Newsletter Console")).toBeVisible();
@@ -78,10 +71,9 @@ test("full admin flow: login, create, upload cover, publish, confirm live", asyn
     await expect(page.getByRole("heading", { name: articleTitle })).toBeVisible();
   });
 
-  await test.step("Settings page renders all three cards", async () => {
+  await test.step("Settings page renders both cards", async () => {
     await page.goto("/admin/settings");
     await expect(page.getByRole("heading", { name: "Change Password" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Two-Factor Authentication" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Site Metadata" })).toBeVisible();
   });
 

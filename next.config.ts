@@ -27,12 +27,12 @@ const cspDirectives = [
   // time — so this allowance is solely for the two cases above, not Tailwind.
   "style-src 'self' 'unsafe-inline'",
   // blob: for CoverImageUploader's local upload preview (URL.createObjectURL).
-  // data: was verified unused when this policy was first written (Module 11) and
-  // deliberately left out — Module 12 added a real, new use for it: the 2FA setup
-  // QR code (/admin/settings) is rendered from otplib+qrcode's own
-  // QRCode.toDataURL() output, a genuine data:image/png URI with no alternative
-  // (it's a one-off, client-side-only generated image, not a stored asset). Adding
-  // it back now that there's an actual need, not a hypothetical one.
+  // data: is for admin.css's .paper-grain background-image (a data:image/svg+xml
+  // texture used behind the login page) — CSP's img-src governs CSS
+  // background-image the same way it governs <img src>. (This directive previously
+  // also carried the 2FA setup QR code's data:image/png URI; that feature was
+  // removed post-launch, but paper-grain's own need for data: predates and is
+  // independent of it.)
   "img-src 'self' https://res.cloudinary.com blob: data:",
   // Module 3 switched to next/font/google self-hosting — verified no remaining
   // fonts.googleapis.com/fonts.gstatic.com references anywhere in actual app code

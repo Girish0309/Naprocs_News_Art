@@ -35,8 +35,6 @@ exercised by the E2E flows (T-096/T-097) rather than getting dedicated rows here
 | T-012 | 2 — Auth | `authorize()` with correct credentials | Returns the user object; `last_login_at` is updated on the Admin document | integration | Yes |
 | T-013 | 2 — Auth | `POST /api/admin/login` under the shared limit | `200 { ok: true }` | integration | Yes |
 | T-014 | 2 — Auth | `POST /api/admin/login` once `login:<ip>` is already exhausted | `429` with a `Retry-After` header | integration | Yes |
-| T-015 | 2 — Auth | `POST /api/admin/2fa/setup` with no session | `401` | integration | Yes |
-| T-016 | 2 — Auth | `POST /api/admin/2fa/setup` authenticated | `200`, response has `secret`/`otpauthUrl`/`qrCodeDataUrl`; Admin's `totp_secret` is persisted | integration | Yes |
 | T-017 | 2 — Auth | `POST /api/admin/change-password` with no session | `401` | integration | Yes |
 | T-018 | 2 — Auth | `POST /api/admin/change-password` with wrong current password | `400`, specific error message | integration | Yes |
 | T-019 | 2 — Auth | `POST /api/admin/change-password` with correct current password | `200`; the new password authenticates on the next `authorize()` call, the old one no longer does | integration | Yes |

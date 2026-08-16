@@ -913,3 +913,20 @@ reconcile (0 vulnerabilities, matches Module 11's clean audit), `tsc --noEmit` a
   the ordinary sticky top bar's own width. Fixed with one added `flex-col`; has no
   effect at `md`+ since the nav is `md:hidden` there regardless (only one in-flow
   child left, direction stops mattering).
+
+## Post-Launch — 2FA Removal (2026-08-16)
+
+- **2FA/TOTP groundwork removed entirely, not just left inert.** It was always
+  documented (Module 2/3/12) as "setup only, never enforced at login" — the login
+  form's TOTP step was visual-only, and `authorize()` never checked `totp_secret`.
+  Rather than continue carrying a feature nobody could ever actually use, removed it
+  completely: `/api/admin/2fa/setup` and its integration test, `TwoFactorCard` from
+  `SettingsContent.tsx`, the TOTP step from `LoginForm.tsx` (back to a single email/
+  password submit), `totp_secret` from the `Admin` schema, `.totp-container` CSS, the
+  `otplib`/`qrcode`/`@types/qrcode` dependencies, and the corresponding T-015/T-016
+  rows in `testing/test-case-matrix.md`. `next.config.ts`'s CSP `img-src` keeps its
+  `data:` allowance — that comment previously credited it solely to the 2FA QR code,
+  but `admin.css`'s `.paper-grain` background (used on the login page) independently
+  needs it too; the comment now says so instead of going stale. No admin document had
+  a populated `totp_secret` to migrate (feature was never actually paired with an
+  authenticator by anyone) — confirmed before removing the field, not assumed.

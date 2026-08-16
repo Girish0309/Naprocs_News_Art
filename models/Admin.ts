@@ -4,7 +4,6 @@ export interface AdminDocument extends Document {
   name: string;
   email: string;
   password_hash: string;
-  totp_secret?: string;
   created_at: Date;
   last_login_at?: Date;
 }
@@ -13,7 +12,6 @@ const AdminSchema = new Schema<AdminDocument>({
   name: { type: String, required: true, trim: true },
   email: { type: String, required: true, unique: true, lowercase: true, trim: true },
   password_hash: { type: String, required: true },
-  totp_secret: { type: String },
   created_at: { type: Date, default: Date.now },
   last_login_at: { type: Date },
 });

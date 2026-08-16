@@ -49,20 +49,6 @@
   transform: scale(0.97);
 }
 
-.totp-container {
-  max-height: 0;
-  overflow: hidden;
-  transition:
-    max-height 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.1),
-    opacity 0.4s ease;
-  opacity: 0;
-}
-.totp-container.expanded {
-  max-height: 160px;
-  opacity: 1;
-  margin-top: 16px;
-}
-
 .spring-ease {
   transition-timing-function: cubic-bezier(0.175, 0.885, 0.32, 1.1);
 }

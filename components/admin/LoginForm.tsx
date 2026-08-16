@@ -1,39 +1,20 @@
 "use client";
 
-import { useState, useRef, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 
-// The TOTP step below is a VISUAL two-step flow only (per the Module 3 restyle brief:
-// "visual pass only, keep Module 2 auth logic untouched"). Step 1 always advances to
-// step 2 — nothing server-side is checked until the real signIn() call fires on step 2,
-// and the 6-digit code isn't sent anywhere, since NextAuth's authorize() doesn't verify
-// TOTP yet (Module 2 groundwork: enforcement is a deliberate future step). Once 2FA
-// enforcement lands server-side, this needs a real "does this account require a code"
-// check between steps 1 and 2.
 export default function LoginForm() {
   const router = useRouter();
-  const [step, setStep] = useState<1 | 2>(1);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [totp, setTotp] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [succeeded, setSucceeded] = useState(false);
-  const totpInputRef = useRef<HTMLInputElement>(null);
 
-  function handleContinue() {
-    setError(null);
-    setIsSubmitting(true);
-    window.setTimeout(() => {
-      setIsSubmitting(false);
-      setStep(2);
-      window.setTimeout(() => totpInputRef.current?.focus(), 50);
-    }, 800);
-  }
-
-  async function handleVerifyAndSignIn() {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
     setError(null);
     setIsSubmitting(true);
 
@@ -47,7 +28,6 @@ export default function LoginForm() {
       if (!preflight.ok) {
         const data = await preflight.json().catch(() => null);
         setError(data?.error ?? "Something went wrong. Please try again.");
-        setStep(1);
         return;
       }
 
@@ -59,7 +39,6 @@ export default function LoginForm() {
 
       if (result?.error) {
         setError("Invalid email or password.");
-        setStep(1);
         return;
       }
 
@@ -68,15 +47,6 @@ export default function LoginForm() {
       router.refresh();
     } finally {
       setIsSubmitting(false);
-    }
-  }
-
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (step === 1) {
-      handleContinue();
-    } else {
-      void handleVerifyAndSignIn();
     }
   }
 
@@ -91,10 +61,7 @@ export default function LoginForm() {
             placeholder=" "
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            readOnly={step === 2}
-            className={`floating-label-input font-ui-label-md text-admin-ui-label-md text-admin-on-surface ${
-              step === 2 ? "bg-admin-surface-container-low text-admin-on-surface-variant" : ""
-            }`}
+            className="floating-label-input font-ui-label-md text-admin-ui-label-md text-admin-on-surface"
           />
           <label htmlFor="email" className="floating-label font-ui-label-sm text-admin-ui-label-sm">
             Email address
@@ -108,35 +75,10 @@ export default function LoginForm() {
             placeholder=" "
             value={password}
             onChange={(event) => setPassword(event.target.value)}
-            readOnly={step === 2}
-            className={`floating-label-input font-ui-label-md text-admin-ui-label-md text-admin-on-surface ${
-              step === 2 ? "bg-admin-surface-container-low text-admin-on-surface-variant" : ""
-            }`}
+            className="floating-label-input font-ui-label-md text-admin-ui-label-md text-admin-on-surface"
           />
           <label htmlFor="password" className="floating-label font-ui-label-sm text-admin-ui-label-sm">
             Password
-          </label>
-        </div>
-      </div>
-
-      <div className={`totp-container ${step === 2 ? "expanded" : ""}`}>
-        <p className="mb-base font-ui-label-sm text-admin-ui-label-sm text-admin-on-surface-variant">
-          Enter the 6-digit code from your authenticator app.
-        </p>
-        <div className="floating-label-group">
-          <input
-            ref={totpInputRef}
-            id="totp"
-            type="text"
-            maxLength={6}
-            pattern="\d{6}"
-            placeholder=" "
-            value={totp}
-            onChange={(event) => setTotp(event.target.value.replace(/\D/g, ""))}
-            className="floating-label-input text-center font-ui-label-md text-admin-ui-label-md tracking-[0.5em] text-admin-on-surface"
-          />
-          <label htmlFor="totp" className="floating-label font-ui-label-sm text-admin-ui-label-sm">
-            Auth Code
           </label>
         </div>
       </div>
@@ -165,15 +107,7 @@ export default function LoginForm() {
           succeeded ? "bg-admin-secondary text-admin-on-secondary" : "bg-admin-primary text-admin-on-primary"
         } disabled:opacity-80`}
       >
-        {isSubmitting ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
-        ) : succeeded ? (
-          "Success"
-        ) : step === 1 ? (
-          "Continue"
-        ) : (
-          "Verify & Sign In"
-        )}
+        {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : succeeded ? "Success" : "Sign In"}
       </button>
     </form>
   );

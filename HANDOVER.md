@@ -25,9 +25,6 @@ Checked against `DEVIATIONS.md` and `DEPLOYMENT.md` §7 rather than assumed curr
   feature addition, not a bug fix" — still true.
 - **`comment_count` has a known idempotency gap** (Module 1-7 audit, item B.6) — an
   explicit, deliberate "not addressed here" item per `DEPLOYMENT.md` §7, not forgotten.
-- **2FA is groundwork only, not enforced at login.** `/api/admin/2fa/setup` generates
-  and persists a TOTP secret; `authorize()` never checks it. The login form's TOTP step
-  is visual-only.
 - **Several buttons are intentionally inert placeholders**, each labeled "Not built
   yet" in its own `title` attribute so this is discoverable at the UI level, not just
   in this file: Preview (article editor), Support (admin sidebar), Share/Bookmark

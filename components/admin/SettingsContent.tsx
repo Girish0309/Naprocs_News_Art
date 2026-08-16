@@ -1,10 +1,8 @@
 "use client";
 
 import { useId, useState } from "react";
-import { KeyRound, ShieldCheck, Globe } from "lucide-react";
+import { KeyRound, Globe } from "lucide-react";
 import { MIN_PASSWORD_LENGTH } from "@/lib/auth-constants";
-
-type TwoFactorSetup = { secret: string; otpauthUrl: string; qrCodeDataUrl: string };
 
 function ChangePasswordCard() {
   const currentId = useId();
@@ -127,101 +125,6 @@ function ChangePasswordCard() {
   );
 }
 
-function TwoFactorCard() {
-  const [setup, setSetup] = useState<TwoFactorSetup | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  async function handleGenerate() {
-    setErrorMessage(null);
-    setLoading(true);
-    try {
-      const res = await fetch("/api/admin/2fa/setup", { method: "POST" });
-      const data = await res.json();
-      if (!res.ok) {
-        setErrorMessage(data.error ?? "Couldn't generate a QR code.");
-        return;
-      }
-      setSetup(data);
-    } catch {
-      setErrorMessage("Couldn't generate a QR code. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  return (
-    <section className="rounded-lg border border-admin-outline-variant bg-admin-surface p-lg">
-      <div className="mb-md flex items-center gap-sm">
-        <ShieldCheck className="h-5 w-5 text-admin-primary" />
-        <h3 className="font-headline-md text-admin-headline-md text-admin-primary">Two-Factor Authentication</h3>
-      </div>
-
-      <p className="mb-md max-w-lg font-ui-label-md text-admin-ui-label-md text-admin-on-surface-variant">
-        Generate a QR code to pair this account with an authenticator app (Google Authenticator, 1Password, Authy,
-        etc.).
-      </p>
-      {/* Honest about current system state, not just this page's own function — 2FA
-          enforcement was Module 2 groundwork only and still isn't wired into the
-          sign-in flow, so this setup doesn't yet change what's required to log in. */}
-      <p className="mb-md max-w-lg rounded border border-admin-outline-variant bg-admin-surface-container-low px-sm py-sm font-ui-label-sm text-admin-ui-label-sm text-admin-on-surface-variant">
-        Setup is available, but 2FA isn&apos;t enforced at login yet — pairing an authenticator app here won&apos;t
-        currently change what&apos;s required to sign in. Backup codes aren&apos;t implemented; this is
-        authenticator-app-only for now.
-      </p>
-
-      {!setup ? (
-        <button
-          type="button"
-          onClick={handleGenerate}
-          disabled={loading}
-          className="btn-press rounded-lg border border-admin-primary px-md py-sm font-ui-label-md text-admin-ui-label-md text-admin-primary transition-colors hover:bg-admin-surface-container-low focus:outline-none focus:ring-2 focus:ring-admin-primary disabled:opacity-50"
-        >
-          {loading ? "Generating..." : "Generate QR Code"}
-        </button>
-      ) : (
-        <div className="flex flex-col gap-md">
-          <p className="max-w-lg font-ui-label-sm text-admin-ui-label-sm text-red-600">
-            Scanning a new code replaces any previous authenticator pairing for this account.
-          </p>
-          {/* Plain <img>, deliberately not next/image — a one-off client-generated
-              data:image/png URI (otplib + qrcode), not a stored/optimizable asset. */}
-          {/* eslint-disable-next-line @next/next/no-img-element -- data: URI from qrcode's toDataURL(), not an optimizable remote asset */}
-          <img
-            src={setup.qrCodeDataUrl}
-            alt="QR code to scan with your authenticator app"
-            width={200}
-            height={200}
-            className="rounded border border-admin-outline-variant"
-          />
-          <div className="flex flex-col gap-xs">
-            <span className="font-meta-caps text-admin-meta-caps text-admin-on-surface-variant">
-              Manual entry key
-            </span>
-            <code className="w-fit rounded bg-admin-surface-container-low px-sm py-xs font-ui-label-sm text-admin-ui-label-sm">
-              {setup.secret}
-            </code>
-          </div>
-          <button
-            type="button"
-            onClick={handleGenerate}
-            disabled={loading}
-            className="btn-press self-start rounded border border-admin-outline-variant px-md py-sm font-ui-label-md text-admin-ui-label-md text-admin-on-surface-variant transition-colors hover:bg-admin-surface-container-low focus:outline-none focus:ring-2 focus:ring-admin-primary disabled:opacity-50"
-          >
-            {loading ? "Regenerating..." : "Regenerate"}
-          </button>
-        </div>
-      )}
-
-      {errorMessage && (
-        <p role="alert" className="mt-sm font-ui-label-sm text-admin-ui-label-sm text-red-600">
-          {errorMessage}
-        </p>
-      )}
-    </section>
-  );
-}
-
 function SiteMetadataCard({
   siteName,
   siteTitle,
@@ -282,7 +185,6 @@ export default function SettingsContent({
 
       <div className="flex flex-col gap-lg">
         <ChangePasswordCard />
-        <TwoFactorCard />
         <SiteMetadataCard siteName={siteName} siteTitle={siteTitle} siteDescription={siteDescription} />
       </div>
     </main>

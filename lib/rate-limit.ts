@@ -14,7 +14,30 @@ export interface RateLimitResult {
 const redisUrl = process.env.UPSTASH_REDIS_REST_URL;
 const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN;
 
-const redis = redisUrl && redisToken ? new Redis({ url: redisUrl, token: redisToken }) : null;
+// rateLimit()/peekRateLimit() run synchronously inside the login, comment, and
+// reaction request paths — an unbounded hang here is worse than having no rate
+// limiter at all (it takes those endpoints down with it, with zero fallback), the
+// same class of bug lib/db.ts's serverSelectionTimeoutMS fixes for MongoDB. 2.5s is
+// short because this should resolve fast or not at all.
+const RATE_LIMIT_TIMEOUT_MS = 2500;
+
+const redis =
+  redisUrl && redisToken
+    ? new Redis({
+        url: redisUrl,
+        token: redisToken,
+        // A *function* here, not a plain AbortSignal — a single AbortSignal can only
+        // ever fire once, but this client is reused across the process's lifetime, so
+        // a static signal would only protect the first call. The SDK (see
+        // node_modules/@upstash/redis nodejs.js's HttpClient.request) calls this once
+        // per request and, critically, checks `isSignalFunction` when a fetch attempt
+        // throws: if the signal came from a function and has fired, it re-throws
+        // immediately instead of retrying — so this bounds the WHOLE call (its
+        // internal retries included, up to 5 by default) to one 2.5s window, not
+        // several stacked ones.
+        signal: () => AbortSignal.timeout(RATE_LIMIT_TIMEOUT_MS),
+      })
+    : null;
 
 let warnedMissingConfig = false;
 
@@ -37,10 +60,21 @@ function getLimiter(limit: number, window: Duration): Ratelimit {
   return limiter;
 }
 
-// Not configured: fail OPEN in development (so local dev works without an Upstash
-// account), but fail CLOSED in production — a missing rate limiter in prod is a
-// misconfiguration, and silently disabling protection on login/upload/comment
-// endpoints is worse than blocking the action until it's fixed.
+// Shared by "Upstash isn't configured at all" and "Upstash didn't respond within
+// RATE_LIMIT_TIMEOUT_MS" — from the caller's perspective both mean the same thing:
+// no working rate-limit enforcement is available right now. Fail OPEN in development
+// (so local dev isn't blocked by a slow or not-yet-configured Upstash), fail CLOSED in
+// production — a missing rate limiter in prod is a misconfiguration, and silently
+// disabling protection on login/upload/comment endpoints is worse than blocking the
+// action until it's fixed. Deliberately distinct from a genuine mid-request failure
+// (network error, Upstash outage) below, which fails closed unconditionally in both
+// environments — that's a rarer, more suspicious failure than "not configured yet" or
+// "timed out," so it doesn't get dev's fail-open convenience.
+function resultWhenNoEnforcementAvailable(limit: number): RateLimitResult {
+  const allow = process.env.NODE_ENV !== "production";
+  return { success: allow, limit, remaining: allow ? limit : 0, reset: Date.now() };
+}
+
 function resultWhenUnconfigured(limit: number): RateLimitResult {
   if (!warnedMissingConfig) {
     warnedMissingConfig = true;
@@ -52,8 +86,24 @@ function resultWhenUnconfigured(limit: number): RateLimitResult {
       console.warn(`${message} Failing open (all requests allowed) outside production.`);
     }
   }
-  const allow = process.env.NODE_ENV !== "production";
-  return { success: allow, limit, remaining: allow ? limit : 0, reset: Date.now() };
+  return resultWhenNoEnforcementAvailable(limit);
+}
+
+// AbortSignal.timeout()'s own firing produces a DOMException named "TimeoutError" —
+// the spec-defined way to tell "our deliberate timeout fired" apart from any other
+// rejection (a real Upstash-side error, a non-timeout network failure), which stays on
+// the unconditional-fail-closed path below instead.
+function isTimeoutError(error: unknown): boolean {
+  return error instanceof Error && error.name === "TimeoutError";
+}
+
+function logTimeout(action: string, key: string): void {
+  const message = `[rate-limit] Upstash ${action} timed out after ${RATE_LIMIT_TIMEOUT_MS}ms for key "${key}".`;
+  if (process.env.NODE_ENV === "production") {
+    console.error(`${message} Failing CLOSED (blocking) in production.`);
+  } else {
+    console.warn(`${message} Failing open (allowed) outside production — same as an unconfigured Upstash.`);
+  }
 }
 
 /**
@@ -82,6 +132,10 @@ export async function rateLimit(key: string, limit: number, window: Duration): P
       reset: result.reset,
     };
   } catch (error) {
+    if (isTimeoutError(error)) {
+      logTimeout("request", key);
+      return resultWhenNoEnforcementAvailable(limit);
+    }
     console.error(`[rate-limit] Upstash request failed for key "${key}" — failing closed:`, error);
     return { success: false, limit, remaining: 0, reset: Date.now() + 60_000 };
   }
@@ -102,6 +156,10 @@ export async function peekRateLimit(key: string, limit: number, window: Duration
     const result = await getLimiter(limit, window).getRemaining(key);
     return { success: result.remaining > 0, limit: result.limit, remaining: result.remaining, reset: result.reset };
   } catch (error) {
+    if (isTimeoutError(error)) {
+      logTimeout("getRemaining", key);
+      return resultWhenNoEnforcementAvailable(limit);
+    }
     console.error(`[rate-limit] Upstash getRemaining failed for key "${key}" — failing closed:`, error);
     return { success: false, limit, remaining: 0, reset: Date.now() + 60_000 };
   }

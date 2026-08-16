@@ -1,3 +1,9 @@
+# Engineering standards — read first
+
+Before starting any new feature, read [ENGINEERING_STANDARDS.md](ENGINEERING_STANDARDS.md).
+Before considering any feature complete, verify it against the relevant rules there
+(F1-F7 for anything touching UI, B1-B8 for anything touching data/security).
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know

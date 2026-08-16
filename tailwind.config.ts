@@ -58,6 +58,10 @@ const adminColors = {
   "secondary-container": "#dfe0df",
   "on-primary": "#ffffff",
   "error-container": "#ffdad6",
+  // Backing color for translucent overlays (drawer backdrop, image-action buttons that
+  // must stay legible over arbitrary photo content) — always used with an opacity
+  // modifier (e.g. `bg-admin-scrim/50`), never on its own.
+  scrim: "#000000",
 };
 
 const journalColors = {
@@ -108,6 +112,9 @@ const journalColors = {
   "inverse-surface": "#2f312f",
   "error-container": "#ffdad6",
   "surface-tint": "#466551",
+  // See adminColors.scrim — added for parity even though no journal-side overlay
+  // exists yet; always used with an opacity modifier (e.g. `bg-journal-scrim/50`).
+  scrim: "#000000",
 };
 
 // fontFamily values are identical for every key shared between the two mockups

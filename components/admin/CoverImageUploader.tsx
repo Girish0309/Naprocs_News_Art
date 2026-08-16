@@ -223,7 +223,7 @@ export default function CoverImageUploader({ value, onChange, altText, onAltText
                 onClick={handleRemove}
                 aria-label="Remove cover image"
                 title="Remove"
-                className="absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-white transition-colors hover:bg-black/80 focus:outline-none focus:ring-2 focus:ring-white"
+                className="absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-admin-scrim/50 text-white transition-colors hover:bg-black/80 focus:outline-none focus:ring-2 focus:ring-white"
               >
                 <X className="h-4 w-4" />
               </button>

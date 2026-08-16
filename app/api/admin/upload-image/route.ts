@@ -88,6 +88,14 @@ export async function POST(request: NextRequest) {
       resource_type: "image",
       format: "jpg",
       transformation: [{ quality: "auto:good", flags: "force_strip" }],
+      // A per-call option, not global cloudinary.config() — the SDK's own upload
+      // request path (node_modules/cloudinary/lib/uploader.js) reads `options.timeout`
+      // directly with no fallback to a configured default, so it must be set here.
+      // Longer than lib/rate-limit.ts's 2.5s: uploads are inherently slower than a
+      // Redis round trip, but this still bounds what would otherwise be the SDK's own
+      // 60s default — long enough for a real upload, short enough to fail before an
+      // admin assumes the request is simply lost.
+      timeout: 15_000,
     });
   } catch (error) {
     console.error("[upload-image] Cloudinary upload failed:", error);

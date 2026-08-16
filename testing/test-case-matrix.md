@@ -80,6 +80,7 @@ exercised by the E2E flows (T-096/T-097) rather than getting dedicated rows here
 | T-057 | 7 — Comments | `POST` with empty `author_name`/`body` | `400` (Zod) | integration | Yes |
 | T-058 | 7 — Comments | `GET /api/admin/comments` with no session | `401` | integration | Yes |
 | T-059 | 7 — Comments | `GET /api/admin/comments` with no `status` query param / with an invalid one | Defaults to `flagged`; an invalid enum value 400s rather than silently returning everything | integration | Yes |
+| T-059b | 7 — Comments (post-launch) | `GET /api/admin/comments?status=all` | Returns comments of every status together, each with its article populated — the admin console's "All" tab (Comments moderation was flagged-only until this addition; see `DEVIATIONS.md`'s post-launch section) | integration | Yes |
 | T-060 | 7 — Comments | **(priority)** Two concurrent `PATCH` requests both moving the same comment to `"removed"` | `comment_count` is decremented exactly **once**, not twice (compare-and-swap) | integration | Yes |
 | T-061 | 7 — Comments | `PATCH` moving a comment from `"removed"` back to `"visible"` | `comment_count` is incremented again | integration | Yes |
 | T-062 | 7 — Comments | `PATCH /api/admin/comments` with no session | `401` | integration | Yes |

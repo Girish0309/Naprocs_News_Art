@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Check, ExternalLink } from "lucide-react";
+import type { Editor } from "@tiptap/react";
 import ArticleEditor, { type ArticleEditorValue } from "./ArticleEditor";
 import CoverImageUploader, { type CoverImageValue } from "./CoverImageUploader";
 
@@ -14,6 +15,7 @@ type CoverImage = CoverImageValue;
 interface ArticleFormProps {
   articleId?: string;
   initialTitle?: string;
+  initialExcerpt?: string;
   initialContent?: string | object;
   initialTags?: string[];
   initialAuthorName: string;
@@ -39,6 +41,7 @@ function formatLastModified(value: string | null): string {
 export default function ArticleForm({
   articleId,
   initialTitle = "",
+  initialExcerpt = "",
   initialContent = "",
   initialTags = [],
   initialAuthorName,
@@ -50,6 +53,7 @@ export default function ArticleForm({
   const router = useRouter();
   const [currentId, setCurrentId] = useState<string | undefined>(articleId);
   const [title, setTitle] = useState(initialTitle);
+  const [excerpt, setExcerpt] = useState(initialExcerpt);
   const [tagsInput, setTagsInput] = useState(initialTags.join(", "));
   const [authorName, setAuthorName] = useState(initialAuthorName);
   const [coverImage, setCoverImage] = useState<CoverImage | null>(initialCoverImage);
@@ -65,6 +69,35 @@ export default function ArticleForm({
   const contentRef = useRef<ArticleEditorValue>({ html: "", json: {} });
   const dirtyRef = useRef(false);
   const savingRef = useRef(false);
+  const isMountedRef = useRef(true);
+  // Title -> Excerpt -> Body keyboard flow (see the Ghost/Notion/Medium research in
+  // this feature's own writeup): the excerpt input is a plain DOM ref (focus() is
+  // synchronous and immediate), but the body is a Tiptap instance living inside
+  // ArticleEditor, which only ever hands its editor object out via onEditorReady —
+  // there's no ref-forwardable DOM node for "the editor" the way there is for a plain
+  // input.
+  const excerptInputRef = useRef<HTMLInputElement>(null);
+  const editorRef = useRef<Editor | null>(null);
+
+  function handleTitleKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      excerptInputRef.current?.focus();
+    }
+  }
+
+  function handleExcerptKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      editorRef.current?.commands.focus("start");
+    }
+  }
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   const markDirty = useCallback(() => {
     dirtyRef.current = true;
@@ -88,6 +121,7 @@ export default function ArticleForm({
 
       const payload = {
         title: title.trim(),
+        excerpt: excerpt.trim(),
         author_name: authorName.trim() || "Unknown",
         body_html: contentRef.current.html,
         body_json: contentRef.current.json,
@@ -121,6 +155,16 @@ export default function ArticleForm({
           throw new Error(typeof data?.error === "string" ? data.error : "Save failed");
         }
 
+        // A save triggered by the unmount-cleanup below (navigating away while
+        // dirty) can still be in flight once the component is actually gone — the
+        // write itself already landed at this point (that's what matters), but
+        // there's no UI left to update, and redirecting a page the user has already
+        // navigated away FROM back to the new article's edit page would be an
+        // actively confusing surprise, not a helpful one. Found live: fixing the
+        // stale-closure bug below (saveRef) meant this success branch started
+        // actually running from the unmount path for the first time, exposing this.
+        if (!isMountedRef.current) return;
+
         const newId: string | undefined = data.article?.id;
         if (newId && !currentId) {
           setCurrentId(newId);
@@ -133,6 +177,7 @@ export default function ArticleForm({
         setSaveStatus(overrides?.status === "published" ? "published" : "saved");
         setCheckmarkKey((key) => key + 1);
       } catch (error) {
+        if (!isMountedRef.current) return;
         // The save didn't actually land — re-flag dirty (it was cleared optimistically
         // above) so the next autosave interval retries, matching the message below.
         dirtyRef.current = true;
@@ -142,7 +187,7 @@ export default function ArticleForm({
         savingRef.current = false;
       }
     },
-    [title, authorName, tagsInput, coverImage, altText, currentId, router]
+    [title, excerpt, authorName, tagsInput, coverImage, altText, currentId, router]
   );
 
   useEffect(() => {
@@ -152,12 +197,30 @@ export default function ArticleForm({
     return () => window.clearInterval(interval);
   }, [save]);
 
+  // Keeps a ref pointed at the latest `save` closure on every render — cheap, and
+  // this effect has no cleanup, so re-running it on every keystroke (save changes
+  // whenever its own deps do) is harmless, unlike the mount/unmount effect below.
+  const saveRef = useRef(save);
+  useEffect(() => {
+    saveRef.current = save;
+  }, [save]);
+
   // Save once more on unmount if there are unsaved changes (e.g. navigating away).
+  // Deliberately `[]` so this runs its cleanup exactly once, at true unmount — but
+  // that means the cleanup closure below must never reference `save` directly: with
+  // an empty dep array, React keeps the very first render's closure for the entire
+  // component lifetime, so a brand-new article (title === "" at mount) would call a
+  // permanently-stale `save` whose own closed-over `title` is still "", tripping its
+  // `if (!title.trim()) return;` guard and silently discarding whatever was actually
+  // typed — confirmed live: navigating away right after typing lost the draft
+  // entirely, while waiting for the interval-based autosave (which correctly reruns
+  // via its own `[save]` dependency) saved it correctly. Reading `saveRef.current`
+  // here instead calls whatever `save` is current at the moment of unmount, not the
+  // one from mount.
   useEffect(() => {
     return () => {
-      if (dirtyRef.current) void save();
+      if (dirtyRef.current) void saveRef.current();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function handlePublish() {
@@ -210,12 +273,25 @@ export default function ArticleForm({
     // whole page scrolls normally instead (overflow-y-auto); at md+ each pane regains
     // its own independent scroll exactly as before (Module 12 responsive fix).
     <main className="flex h-full flex-1 flex-col overflow-y-auto bg-admin-background md:flex-row md:overflow-hidden">
-      <div className="relative flex w-full flex-col border-r border-hairline md:h-full md:w-3/4 md:overflow-hidden">
+      {/* min-w-0 on both this pane and the aside below: at md:flex-row these are two
+          real flex siblings sharing width via percentages (md:w-3/4 / md:w-1/4), and
+          flex items default to min-width: auto (their own content's intrinsic width as
+          a floor) — without min-w-0, sufficiently wide unbreakable content in either
+          pane (a long unhyphenated filename in the dropzone, an unbroken title/tag) can
+          refuse to shrink to its allotted share, forcing this row wider than its
+          parent. Not the cause of the specific 256px overflow just fixed in
+          AdminShell.tsx (that was the parent wrapper's own width, one level up) — this
+          is the same F2 pattern applied defensively so this row's own math can't
+          reintroduce a similar overflow independently. */}
+      <div className="relative flex w-full min-w-0 flex-col border-r border-hairline md:h-full md:w-3/4 md:overflow-hidden">
         <ArticleEditor
           initialContent={initialContent}
           onChange={(value) => {
             contentRef.current = value;
             markDirty();
+          }}
+          onEditorReady={(editor) => {
+            editorRef.current = editor;
           }}
           toolbarRightSlot={autosaveIndicator}
           titleSlot={
@@ -228,14 +304,31 @@ export default function ArticleForm({
                 setTitle(event.target.value);
                 markDirty();
               }}
+              onKeyDown={handleTitleKeyDown}
               placeholder="Article Title"
-              className="mt-lg w-full border-0 border-b-2 border-transparent bg-transparent p-0 font-display-lg text-admin-display-lg text-admin-primary outline-none placeholder:text-admin-outline-variant focus:border-admin-primary focus:ring-0"
+              className="mt-lg w-full border-0 border-b-2 border-transparent bg-transparent p-0 font-display-lg text-admin-display-lg text-admin-primary outline-none transition-colors duration-300 ease-[cubic-bezier(0.175,0.885,0.32,1.1)] placeholder:text-admin-outline-variant focus:border-admin-primary focus:ring-0"
+            />
+          }
+          excerptSlot={
+            <input
+              id="article-excerpt"
+              ref={excerptInputRef}
+              type="text"
+              aria-label="Article excerpt"
+              value={excerpt}
+              onChange={(event) => {
+                setExcerpt(event.target.value);
+                markDirty();
+              }}
+              onKeyDown={handleExcerptKeyDown}
+              placeholder="Add a short excerpt (optional) — press Enter to start writing"
+              className="w-full border-0 border-b-2 border-transparent bg-transparent p-0 font-headline-md text-admin-headline-md text-admin-secondary outline-none transition-colors duration-300 ease-[cubic-bezier(0.175,0.885,0.32,1.1)] placeholder:text-admin-outline-variant focus:border-admin-primary focus:ring-0"
             />
           }
         />
       </div>
 
-      <aside className="no-scrollbar flex w-full flex-col bg-admin-surface-bright md:h-full md:w-1/4 md:overflow-y-auto">
+      <aside className="no-scrollbar flex w-full min-w-0 flex-col bg-admin-surface-bright md:h-full md:w-1/4 md:overflow-y-auto">
         {/* Pinned regardless of how tall the content below grows (tags, alt-text,
             future fields) — this is the actual "sticky-sidebar-with-pinned-publish"
             property Module 3 intended; previously Publish was just the first item in

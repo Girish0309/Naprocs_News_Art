@@ -35,6 +35,8 @@ export default function DashboardContent() {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
@@ -63,6 +65,11 @@ export default function DashboardContent() {
         if (ignore) return;
         setArticles(data.articles);
         setTotal(data.total);
+        setLoadError(null);
+      } else {
+        // Otherwise the empty state below would say "No articles yet" during a DB
+        // outage — a misleading, actively wrong message, not just a missing one.
+        setLoadError("Couldn't load articles right now. Please try again in a moment.");
       }
       setLoading(false);
     }
@@ -75,10 +82,14 @@ export default function DashboardContent() {
 
   async function handleDelete(id: string) {
     if (!window.confirm("Delete this article? This cannot be undone.")) return;
+    setDeleteError(null);
     const res = await fetch(`/api/admin/articles/${id}`, { method: "DELETE" });
     if (res.ok) {
       setOpenMenuId(null);
       setRefreshKey((key) => key + 1);
+    } else {
+      setOpenMenuId(null);
+      setDeleteError("Couldn't delete that article. Please try again.");
     }
   }
 
@@ -104,6 +115,12 @@ export default function DashboardContent() {
           New Article
         </Link>
       </header>
+
+      {deleteError && (
+        <p role="alert" className="mb-md font-ui-label-sm text-admin-ui-label-sm text-red-600">
+          {deleteError}
+        </p>
+      )}
 
       <div className="mb-md flex flex-col items-center justify-between gap-md border-b border-admin-outline-variant pb-md sm:flex-row">
         <div className="flex w-full items-center gap-md sm:w-auto">
@@ -142,7 +159,15 @@ export default function DashboardContent() {
           <div className="col-span-2 text-right">Actions</div>
         </div>
 
-        {!loading && articles.length === 0 && (
+        {/* centered empty/error-state message, not a width-bound content container — F2 exception */}
+        {!loading && loadError && (
+          <div className="flex flex-col items-center gap-sm py-xl text-center">
+            <FileText className="h-6 w-6 text-admin-on-surface-variant" />
+            <p className="font-ui-label-md text-admin-ui-label-md text-admin-on-surface-variant">{loadError}</p>
+          </div>
+        )}
+
+        {!loading && !loadError && articles.length === 0 && (
           <div className="flex flex-col items-center gap-sm py-xl text-center">
             <FileText className="h-6 w-6 text-admin-on-surface-variant" />
             <p className="font-ui-label-md text-admin-ui-label-md text-admin-on-surface-variant">
@@ -162,8 +187,20 @@ export default function DashboardContent() {
             className="row-hover-effect group relative grid cursor-pointer grid-cols-1 gap-md border-b border-admin-outline-variant px-md py-md transition-colors duration-300 spring-ease hover:bg-admin-surface-container-low sm:grid-cols-12"
             onClick={() => router.push(`/admin/articles/${article.id}/edit`)}
           >
-            <div className="flex flex-col justify-center sm:col-span-6">
-              <h3 className="mb-xs font-headline-md text-admin-headline-md text-admin-primary transition-colors group-hover:text-admin-tertiary-container">
+            {/* min-w-0 is required here, not decorative — this cell is a CSS Grid item
+                (sm:col-span-6 of the row's grid-cols-12), and grid items default to
+                min-width: auto (their content's own intrinsic width as a floor), which
+                an unbroken long word in the title can exceed. Confirmed live: without
+                min-w-0, the cell's *box* still stays correctly track-sized here (thanks
+                to Tailwind's grid-cols-N utility using minmax(0,1fr) tracks), but that
+                alone doesn't fix anything — the real bug is the title text overflowing
+                its own already-correctly-sized box (no break-words), painting straight
+                over the status/date columns beside it. min-w-0 is still needed so this
+                cell can't silently start actually growing past its track the moment
+                anyone changes this row to flexbox or a raw (non-minmax) grid template —
+                don't remove it just because it looks unnecessary against a normal title. */}
+            <div className="min-w-0 flex flex-col justify-center sm:col-span-6">
+              <h3 className="mb-xs break-words font-headline-md text-admin-headline-md text-admin-primary transition-colors group-hover:text-admin-tertiary-container">
                 {article.title || "Untitled"}
               </h3>
               <p className="truncate font-ui-label-sm text-admin-ui-label-sm text-admin-on-surface-variant">

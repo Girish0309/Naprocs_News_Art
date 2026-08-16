@@ -19,6 +19,12 @@ interface ArticleEditorProps {
   toolbarRightSlot?: React.ReactNode;
   /** Rendered above the rich text content, inside the same scroll container (the title input). */
   titleSlot?: React.ReactNode;
+  /** Rendered between titleSlot and the rich text content (the excerpt input). */
+  excerptSlot?: React.ReactNode;
+  /** Fires once the Tiptap instance exists, so a parent (the excerpt field's Enter
+   * handler) can imperatively focus into the body — the editor instance otherwise
+   * never leaves this component. */
+  onEditorReady?: (editor: Editor) => void;
 }
 
 function ToolbarButton({
@@ -103,6 +109,8 @@ export default function ArticleEditor({
   editable = true,
   toolbarRightSlot,
   titleSlot,
+  excerptSlot,
+  onEditorReady,
 }: ArticleEditorProps) {
   const editor = useEditor({
     extensions: [
@@ -126,12 +134,21 @@ export default function ArticleEditor({
     };
   }, [editor]);
 
+  useEffect(() => {
+    if (editor) onEditorReady?.(editor);
+    // onEditorReady is expected to just stash the instance in a ref (see ArticleForm),
+    // so re-running this if the parent re-renders with a new inline callback identity
+    // is harmless — `editor` itself (Tiptap's own stable instance) is the real guard.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editor]);
+
   return (
     <div className="flex h-full flex-col">
       <Toolbar editor={editor} rightSlot={toolbarRightSlot} />
       <div className="no-scrollbar flex flex-1 justify-center overflow-y-auto px-lg py-lg md:px-xl">
         <div className="flex w-full max-w-[680px] flex-col gap-lg pb-xl">
           {titleSlot}
+          {excerptSlot}
           <EditorContent
             editor={editor}
             className="font-article-body text-admin-article-body text-admin-primary-container [&_.ProseMirror]:min-h-[512px] [&_.ProseMirror]:outline-none [&_.ProseMirror_blockquote]:border-l-2 [&_.ProseMirror_blockquote]:border-admin-outline-variant [&_.ProseMirror_blockquote]:pl-md [&_.ProseMirror_p]:mb-md"

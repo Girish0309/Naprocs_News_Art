@@ -2,12 +2,81 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Search, X } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { Search, X, Menu } from "lucide-react";
 import { useSearchQuery } from "./SearchQueryContext";
 
 const TRANSITION_MS = 300;
 
+const NAV_ITEMS = [
+  { href: "/", label: "Essays" },
+  { href: "/archive", label: "Archive" },
+  { href: "/about", label: "About" },
+] as const;
+
+// "/" would match `startsWith` for every path, so the homepage needs an exact check;
+// the other two are leaf pages with no nested children, so a prefix check is fine (and
+// consistent with AdminShell's own `pathname?.startsWith(href)` convention).
+function isNavItemActive(href: string, pathname: string | null): boolean {
+  return href === "/" ? pathname === "/" : Boolean(pathname?.startsWith(href));
+}
+
+// The exact treatment design-reference/user/homepage.html hardcodes onto "Essays"
+// alone (a static mockup has no real routing, so it could only ever show one page's
+// state) — generalized here to whichever item is actually current.
+function DesktopNav({ pathname }: { pathname: string | null }) {
+  return (
+    <nav className="hidden gap-8 md:flex">
+      {NAV_ITEMS.map(({ href, label }) => {
+        const isActive = isNavItemActive(href, pathname);
+        return (
+          <Link
+            key={href}
+            href={href}
+            className={`border-b-2 pb-1 font-ui-label-lg text-journal-ui-label-lg transition-all duration-150 ${
+              isActive
+                ? "border-journal-primary text-journal-primary opacity-70"
+                : "border-transparent text-journal-secondary transition-colors hover:text-journal-primary"
+            }`}
+          >
+            {label}
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}
+
+// Vertical stack for the drawer — a left-border accent reads more clearly than a
+// bottom-underline once links are stacked, the conventional treatment for a vertical
+// nav (the same reasoning AdminShell's sidebar applies), built with plain Tailwind
+// border utilities and journal-* tokens rather than admin's arbitrary-offset technique
+// or its color palette — adapted to this site's own visual language, not copied from it.
+function MobileNavLinks({ pathname }: { pathname: string | null }) {
+  return (
+    <div className="flex flex-1 flex-col gap-2">
+      {NAV_ITEMS.map(({ href, label }) => {
+        const isActive = isNavItemActive(href, pathname);
+        return (
+          <Link
+            key={href}
+            href={href}
+            className={`rounded-md border-l-4 px-4 py-3 font-ui-label-lg text-journal-ui-label-lg transition-colors duration-200 ${
+              isActive
+                ? "border-journal-primary bg-journal-surface-container-low font-semibold text-journal-primary"
+                : "border-transparent text-journal-secondary hover:bg-journal-surface-container-low hover:text-journal-primary"
+            }`}
+          >
+            {label}
+          </Link>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function SiteHeader() {
+  const pathname = usePathname();
   // Two-stage state, matching the mockup's own `hidden` + `-translate-y-full` combo:
   // `mounted` controls whether the bar exists in layout at all (so it can never
   // intercept clicks on the header while collapsed), `open` controls the slide
@@ -15,10 +84,16 @@ export default function SiteHeader() {
   // Closing: slide up immediately, then unmount after the transition finishes.
   const [mounted, setMounted] = useState(false);
   const [open, setOpen] = useState(false);
+  // Same two-stage pattern for the mobile nav drawer — a separate, independent pair of
+  // state so the search overlay and the nav drawer can't be confused for one another.
+  const [navMounted, setNavMounted] = useState(false);
+  const [navOpen, setNavOpen] = useState(false);
+  const [prevPathname, setPrevPathname] = useState(pathname);
   const { query, setQuery } = useSearchQuery();
   const inputRef = useRef<HTMLInputElement>(null);
 
   function openSearch() {
+    if (navOpen) closeNav();
     setMounted(true);
     window.setTimeout(() => {
       setOpen(true);
@@ -32,16 +107,39 @@ export default function SiteHeader() {
     window.setTimeout(() => setMounted(false), TRANSITION_MS);
   }
 
+  function openNav() {
+    if (open) closeSearch();
+    setNavMounted(true);
+    window.setTimeout(() => setNavOpen(true), 10);
+  }
+
+  function closeNav() {
+    setNavOpen(false);
+    window.setTimeout(() => setNavMounted(false), TRANSITION_MS);
+  }
+
+  // Closes the drawer when the route actually changes (nav-link tap or back/forward)
+  // — react.dev's documented "adjusting state during render" pattern, not an effect
+  // keyed on [pathname], which would trip react-hooks/set-state-in-effect the same way
+  // it did in components/admin/AdminShell.tsx before that fix (see
+  // audit/engineering-standards-compliance-report.md §5.3.1) — applied here from the
+  // start instead of repeating that mistake.
+  if (pathname !== prevPathname) {
+    setPrevPathname(pathname);
+    setNavOpen(false);
+    setNavMounted(false);
+  }
+
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape" && open) {
-        closeSearch();
-      }
+      if (event.key !== "Escape") return;
+      if (open) closeSearch();
+      if (navOpen) closeNav();
     }
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
+  }, [open, navOpen]);
 
   function handleSubmit(event: React.FormEvent) {
     // Results already update live as-you-type (debounced, on the homepage) — submit
@@ -53,31 +151,25 @@ export default function SiteHeader() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-journal-outline-variant bg-journal-surface">
       <div className="mx-auto flex w-full max-w-[1440px] items-center justify-between px-margin-safe py-4">
-        <Link href="/" className="flex items-center gap-4 transition-opacity hover:opacity-80">
-          <span className="font-display-lg text-journal-display-lg tracking-tight text-journal-primary">
-            The Journal
-          </span>
-        </Link>
-        <nav className="hidden gap-8 md:flex">
-          <Link
-            href="/"
-            className="border-b-2 border-journal-primary pb-1 font-ui-label-lg text-journal-ui-label-lg text-journal-primary opacity-70 transition-all duration-150"
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={openNav}
+            aria-label="Open navigation menu"
+            aria-expanded={navOpen}
+            className="rounded-full p-2 text-journal-secondary transition-colors hover:bg-journal-surface-container-low hover:text-journal-primary focus:outline-none focus:ring-2 focus:ring-journal-primary md:hidden"
           >
-            Essays
+            <Menu className="h-5 w-5" />
+          </button>
+          <Link href="/" className="flex items-center gap-4 transition-opacity hover:opacity-80">
+            <span className="font-display-lg text-journal-display-lg tracking-tight text-journal-primary">
+              The Journal
+            </span>
           </Link>
-          <a
-            href="#"
-            className="pb-1 font-ui-label-lg text-journal-ui-label-lg text-journal-secondary transition-colors hover:text-journal-primary"
-          >
-            Archive
-          </a>
-          <a
-            href="#"
-            className="pb-1 font-ui-label-lg text-journal-ui-label-lg text-journal-secondary transition-colors hover:text-journal-primary"
-          >
-            About
-          </a>
-        </nav>
+        </div>
+
+        <DesktopNav pathname={pathname} />
+
         <div className="flex items-center gap-4">
           <button
             aria-label={open ? "Close search" : "Search"}
@@ -119,6 +211,41 @@ export default function SiteHeader() {
             </div>
           </form>
         </div>
+      )}
+
+      {navMounted && (
+        <>
+          <div
+            onClick={closeNav}
+            aria-hidden="true"
+            className={`fixed inset-0 z-40 bg-journal-scrim/50 transition-opacity duration-300 ease-in-out md:hidden ${
+              navOpen ? "opacity-100" : "opacity-0"
+            }`}
+          />
+          <aside
+            role="dialog"
+            aria-modal="true"
+            aria-label="Navigation menu"
+            className={`fixed left-0 top-0 z-[60] flex h-full w-64 flex-col border-r border-journal-outline-variant bg-journal-surface px-6 py-8 shadow-xl transition-transform duration-300 ease-in-out md:hidden ${
+              navOpen ? "translate-x-0" : "-translate-x-full"
+            }`}
+          >
+            <div className="mb-8 flex items-center justify-between">
+              <span className="font-display-lg text-journal-display-lg tracking-tight text-journal-primary">
+                The Journal
+              </span>
+              <button
+                type="button"
+                onClick={closeNav}
+                aria-label="Close navigation menu"
+                className="rounded-full p-2 text-journal-secondary transition-colors hover:bg-journal-surface-container-low hover:text-journal-primary focus:outline-none focus:ring-2 focus:ring-journal-primary"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <MobileNavLinks pathname={pathname} />
+          </aside>
+        </>
       )}
     </header>
   );

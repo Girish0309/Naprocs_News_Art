@@ -154,7 +154,7 @@ export default function CommentSection({
                   {formatCommentDate(comment.created_at)}
                 </span>
               </div>
-              <p className="font-article-body text-[1rem] leading-relaxed text-journal-on-surface-variant">
+              <p className="break-words font-article-body text-[1rem] leading-relaxed text-journal-on-surface-variant">
                 {comment.body}
               </p>
               <div className="mt-6 border-b border-journal-outline-variant opacity-0 transition-opacity group-hover:opacity-100" />

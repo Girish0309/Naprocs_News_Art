@@ -45,12 +45,14 @@ export default function ArticleRow({ article, variant }: { article: ArticleRowDa
         href={`/articles/${article.slug}`}
         className="group -mx-4 flex cursor-pointer flex-col rounded-lg border-t border-journal-outline-variant bg-journal-surface-container-lowest px-4 py-12 transition-colors duration-300 hover:bg-journal-surface-container-low"
       >
-        <div className="mx-auto flex max-w-xl flex-grow flex-col items-center justify-center text-center">
+        <div className="mx-auto flex w-full min-w-0 max-w-xl flex-grow flex-col items-stretch justify-center text-center">
           <Meta tags={article.tags} readTimeMinutes={article.read_time_minutes} center />
-          <h2 className="mb-6 font-display-lg text-journal-display-lg leading-tight text-journal-on-surface transition-colors group-hover:text-journal-primary-container">
+          <h2 className="mb-6 break-words font-display-lg text-journal-display-lg leading-tight text-journal-on-surface transition-colors group-hover:text-journal-primary-container">
             {article.title}
           </h2>
-          <p className="mb-8 font-article-body text-journal-article-body text-journal-secondary">{article.excerpt}</p>
+          <p className="mb-8 break-words font-article-body text-journal-article-body text-journal-secondary">
+            {article.excerpt}
+          </p>
           <div className="flex items-center justify-center gap-6 font-ui-meta text-journal-ui-meta text-journal-on-surface-variant">
             <span className="font-semibold text-journal-on-surface">{article.author_name}</span>
             <span className="text-journal-outline-variant">|</span>
@@ -64,7 +66,7 @@ export default function ArticleRow({ article, variant }: { article: ArticleRowDa
   return (
     <Link
       href={`/articles/${article.slug}`}
-      className="group -mx-4 flex cursor-pointer flex-col items-start gap-8 rounded-lg border-t border-journal-outline-variant px-4 py-8 transition-colors duration-300 hover:bg-journal-surface-container-low md:flex-row"
+      className="group -mx-4 flex cursor-pointer flex-col items-stretch gap-8 rounded-lg border-t border-journal-outline-variant px-4 py-8 transition-colors duration-300 hover:bg-journal-surface-container-low md:flex-row md:items-start"
     >
       <div className="relative aspect-[3/2] w-full shrink-0 overflow-hidden rounded-md bg-journal-surface-container-high md:w-1/3">
         {article.cover_image && (
@@ -77,13 +79,13 @@ export default function ArticleRow({ article, variant }: { article: ArticleRowDa
           />
         )}
       </div>
-      <div className="flex h-full flex-grow flex-col justify-between">
+      <div className="flex h-full min-w-0 flex-grow flex-col justify-between">
         <div>
           <Meta tags={article.tags} readTimeMinutes={article.read_time_minutes} />
-          <h2 className="mb-3 font-headline-md text-journal-headline-md text-journal-on-surface transition-colors group-hover:text-journal-primary-container">
+          <h2 className="mb-3 break-words font-headline-md text-journal-headline-md text-journal-on-surface transition-colors group-hover:text-journal-primary-container">
             {article.title}
           </h2>
-          <p className="mb-6 line-clamp-3 font-article-body text-journal-article-body text-journal-secondary">
+          <p className="mb-6 line-clamp-3 break-words font-article-body text-journal-article-body text-journal-secondary">
             {article.excerpt}
           </p>
         </div>

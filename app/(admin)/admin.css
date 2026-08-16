@@ -70,7 +70,11 @@
   transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.1);
 }
 .fade-transition {
-  transition: all 0.3s ease-in-out;
+  /* Matches the spring curve every other interactive element in the console uses
+     (.btn-press, .spring-transition, .progress-bar-ease, .row-hover-effect) — this
+     was the one place still on a generic ease, despite being the single
+     most-frequently-seen recurring animation in the editor (fires every autosave). */
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.1);
 }
 
 .row-hover-effect {

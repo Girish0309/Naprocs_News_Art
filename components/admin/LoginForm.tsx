@@ -131,7 +131,6 @@ export default function LoginForm() {
             maxLength={6}
             pattern="\d{6}"
             placeholder=" "
-            required={step === 2}
             value={totp}
             onChange={(event) => setTotp(event.target.value.replace(/\D/g, ""))}
             className="floating-label-input text-center font-ui-label-md text-admin-ui-label-md tracking-[0.5em] text-admin-on-surface"

@@ -875,3 +875,41 @@ reconcile (0 vulnerabilities, matches Module 11's clean audit), `tsc --noEmit` a
   item 11) was not checked** — no Atlas dashboard access. `DEPLOYMENT.md` gives
   the general M0 ceiling (512MB) and exactly where to check current usage, rather
   than inventing a specific number.
+
+## Post-Launch — Editor Title→Excerpt→Body Flow (2026-08-16)
+
+- **A new `excerpt` input was added to the article editor UI — a genuine scope
+  addition, not a bug fix.** Requested as one of two interpretations for fixing the
+  editor's dead-end title field (pressing Enter did nothing); researched how Ghost,
+  Notion, and Medium each handle this transition before choosing. Ghost and Notion
+  both go straight from Title to the body in their primary editing flow (Ghost's
+  excerpt field lives in a separate settings panel, not the linear typing flow;
+  Notion has no subtitle concept at all) — the research alone would have argued for
+  the simpler fix (Enter in Title just focuses the body). Went with the excerpt
+  field anyway because, unlike a hypothetical new field, `excerpt` already existed
+  end-to-end in this project — schema (`models/Article.ts`), both the create and
+  update API routes, and three separate read paths (`DashboardContent.tsx`'s "No
+  excerpt yet." fallback, the homepage, and the article page's meta description,
+  Module 9/10) — with the sole gap being that nothing in the editor UI could ever
+  set it, exactly as this log's own Module 3/10 entries already flagged. Adding the
+  input was a small, low-risk lift specifically because that gap was this narrow;
+  a field with no existing consumers would have been a materially bigger call.
+  Enter in Title now focuses the new excerpt field; Enter there focuses the body
+  editor (Tiptap, via a new `onEditorReady` callback `ArticleEditor.tsx` exposes,
+  since the editor instance otherwise never leaves that component). Both focus
+  transitions use the project's established spring easing (`ENGINEERING_STANDARDS.md`
+  F4), matching the timing already used elsewhere, not a new curve.
+- **Real, pre-existing bug found and fixed while verifying the above at 375px**:
+  `AdminShell.tsx`'s root container was `flex` with no `flex-col`. Below `md`, its
+  only two in-flow children (the sticky mobile nav bar and the page content
+  wrapper — both `<aside>` elements are `fixed`, out of flow) laid out side by side
+  instead of stacked, each shrinking to its own content's minimum intrinsic width
+  rather than the nav taking full width with content below it. Confirmed live via
+  direct element measurements across three different admin pages (Dashboard,
+  Comments, the article editor) before fixing — this affected every admin screen at
+  mobile widths, not just the one this task touched, and had gone uncaught by every
+  prior mobile-nav verification in this project's own history because those all
+  specifically exercised the drawer (which is `fixed`, immune to this bug), never
+  the ordinary sticky top bar's own width. Fixed with one added `flex-col`; has no
+  effect at `md`+ since the nav is `md:hidden` there regardless (only one in-flow
+  child left, direction stops mattering).

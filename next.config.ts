@@ -46,6 +46,10 @@ const cspDirectives = [
 ];
 
 const nextConfig: NextConfig = {
+  // Found during the final pre-handover security audit: Next.js sends
+  // `X-Powered-By: Next.js` by default, a low-severity but free-to-remove
+  // framework-fingerprinting leak. No functional effect either way.
+  poweredByHeader: false,
   images: {
     remotePatterns: [
       {

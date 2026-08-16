@@ -5,6 +5,7 @@ import dbConnect from "@/lib/db";
 import { getServerAuthSession } from "@/lib/auth";
 import { rateLimit } from "@/lib/rate-limit";
 import Admin from "@/models/Admin";
+import { withDbErrorHandling } from "@/lib/with-db-error-handling";
 
 const MIN_PASSWORD_LENGTH = 8;
 
@@ -13,7 +14,7 @@ const changePasswordSchema = z.object({
   new_password: z.string().min(MIN_PASSWORD_LENGTH, `New password must be at least ${MIN_PASSWORD_LENGTH} characters.`),
 });
 
-export async function POST(request: NextRequest) {
+export const POST = withDbErrorHandling(async (request: NextRequest) => {
   const session = await getServerAuthSession();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -56,4 +57,4 @@ export async function POST(request: NextRequest) {
   await admin.save();
 
   return NextResponse.json({ ok: true });
-}
+});

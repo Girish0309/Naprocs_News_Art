@@ -5,6 +5,7 @@ import Article from "@/models/Article";
 import { calculateReadTimeMinutes, deriveExcerpt } from "@/lib/article-text";
 import { buildArticleTextSearch } from "@/lib/article-search";
 import { pageParam, limitParam, boundedTextParam } from "@/lib/query-params";
+import { withDbErrorHandling } from "@/lib/with-db-error-handling";
 
 const DEFAULT_LIMIT = 10;
 
@@ -14,7 +15,7 @@ const searchQuerySchema = z.object({
   limit: limitParam(DEFAULT_LIMIT, 20),
 });
 
-export async function GET(request: NextRequest) {
+export const GET = withDbErrorHandling(async (request: NextRequest) => {
   const { searchParams } = request.nextUrl;
   const parsed = searchQuerySchema.safeParse(Object.fromEntries(searchParams));
   if (!parsed.success) {
@@ -69,4 +70,4 @@ export async function GET(request: NextRequest) {
     page,
     limit,
   });
-}
+});

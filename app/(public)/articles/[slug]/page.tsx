@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import { Share2, Bookmark } from "lucide-react";
-import dbConnect from "@/lib/db";
+import dbConnect, { DatabaseConnectionError } from "@/lib/db";
 import Article from "@/models/Article";
 import Comment from "@/models/Comment";
 import { sanitizeArticleHtml } from "@/lib/sanitize";
@@ -11,6 +11,7 @@ import { calculateReadTimeMinutes, truncateAtWordBoundary } from "@/lib/article-
 import { getRelatedArticles } from "@/lib/related-articles";
 import LikeButton from "@/components/public/LikeButton";
 import CommentSection from "@/components/public/CommentSection";
+import DbErrorFallback from "@/components/public/DbErrorFallback";
 import { SITE_NAME, SITE_URL } from "@/lib/site-config";
 
 // SSG with a 60s time-based ISR fallback; the publish action (Module 5) calls
@@ -34,9 +35,18 @@ function formatShortDate(value: Date | string): string {
 }
 
 export async function generateStaticParams() {
-  await dbConnect();
-  const articles = await Article.find({ status: "published" }).select("slug").lean();
-  return articles.map((article) => ({ slug: article.slug }));
+  try {
+    await dbConnect();
+    const articles = await Article.find({ status: "published" }).select("slug").lean();
+    return articles.map((article) => ({ slug: article.slug }));
+  } catch (error) {
+    // Same reasoning as generateMetadata's own catch below: this must never take the
+    // whole route down. An empty list here doesn't 404 any article — dynamicParams
+    // defaults to true, so every slug still renders on demand via the page component
+    // itself, which has its own DatabaseConnectionError handling for exactly this case.
+    console.error("[articles/[slug]] generateStaticParams failed:", error);
+    return [];
+  }
 }
 
 export async function generateMetadata(props: PageProps<"/articles/[slug]">): Promise<Metadata> {
@@ -88,13 +98,41 @@ export async function generateMetadata(props: PageProps<"/articles/[slug]">): Pr
 export default async function ArticlePage(props: PageProps<"/articles/[slug]">) {
   const { slug } = await props.params;
 
-  await dbConnect();
-  const article = await Article.findOne({ slug, status: "published" }).lean();
+  let article, related, initialComments;
+  try {
+    await dbConnect();
+    article = await Article.findOne({ slug, status: "published" }).lean();
 
-  // Covers both a genuinely missing slug and a slug that exists but is still a
-  // draft — neither should ever render, and both look identical from the outside.
-  if (!article) {
-    notFound();
+    // Covers both a genuinely missing slug and a slug that exists but is still a
+    // draft — neither should ever render, and both look identical from the outside.
+    if (!article) {
+      notFound();
+    }
+
+    // "More like this": 2-3 published articles sharing a tag, falling back to the most
+    // recent other published articles when there's no tag overlap — see
+    // lib/related-articles.ts (extracted so it has a direct test surface; a Server
+    // Component itself isn't independently callable/testable the same way).
+    related = await getRelatedArticles(article);
+
+    const comments = await Comment.find({ article_id: article._id, status: "visible" })
+      .sort({ created_at: 1 })
+      .select("author_name body created_at")
+      .lean();
+    initialComments = comments.map((comment) => ({
+      id: String(comment._id),
+      author_name: comment.author_name,
+      body: comment.body,
+      created_at: comment.created_at,
+    }));
+  } catch (error) {
+    if (error instanceof DatabaseConnectionError) {
+      console.error(`[articles/${slug}] failed to load:`, error);
+      return <DbErrorFallback retryHref={`/articles/${slug}`} />;
+    }
+    // Lets notFound()'s own special digest (and any other genuine error) propagate
+    // to the nearer not-found.tsx / error.tsx boundary as before.
+    throw error;
   }
 
   // Sanitized again here even though it's sanitized on save (article API routes) —
@@ -123,23 +161,6 @@ export default async function ArticlePage(props: PageProps<"/articles/[slug]">) 
     },
   };
 
-  // "More like this": 2-3 published articles sharing a tag, falling back to the most
-  // recent other published articles when there's no tag overlap — see
-  // lib/related-articles.ts (extracted so it has a direct test surface; a Server
-  // Component itself isn't independently callable/testable the same way).
-  const related = await getRelatedArticles(article);
-
-  const comments = await Comment.find({ article_id: article._id, status: "visible" })
-    .sort({ created_at: 1 })
-    .select("author_name body created_at")
-    .lean();
-  const initialComments = comments.map((comment) => ({
-    id: String(comment._id),
-    author_name: comment.author_name,
-    body: comment.body,
-    created_at: comment.created_at,
-  }));
-
   return (
     <>
       {/* JSON.stringify doesn't escape HTML — `<` is replaced with its unicode escape
@@ -149,24 +170,33 @@ export default async function ArticlePage(props: PageProps<"/articles/[slug]">) 
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
       />
-      {/* A fixed 614px hero on a 375px-wide phone is nearly 2x taller than wide —
-          scaled down at mobile/tablet, full size from md+ (Module 12 responsive fix). */}
+      {/* Sized from the upload's own stored dimensions (not a fixed crop box), so the
+          hero's aspect ratio always matches whatever the admin actually uploaded and
+          nothing gets cropped regardless of the source image's shape. Inset within the
+          same max-width/gutter the header uses and rounded like every other framed
+          image on the site (ArticleRow's thumbnails), rather than a full-bleed band
+          butting straight up against the header. */}
       {article.cover_image && (
-        <div className="relative h-[320px] w-full overflow-hidden bg-journal-surface-container-high sm:h-[420px] md:h-[614px] md:max-h-[600px]">
-          <Image
-            src={article.cover_image.url}
-            alt={article.cover_image.alt_text ?? ""}
-            fill
-            priority
-            sizes="100vw"
-            className="object-cover opacity-90 mix-blend-multiply grayscale-[20%]"
-          />
+        <div className="mx-auto w-full max-w-[1440px] px-margin-safe pt-8 md:pt-12">
+          <div className="relative w-full overflow-hidden rounded-xl bg-journal-surface-container-high">
+            <Image
+              src={article.cover_image.url}
+              alt={article.cover_image.alt_text ?? ""}
+              width={article.cover_image.width}
+              height={article.cover_image.height}
+              priority
+              sizes="(min-width: 1440px) 1440px, 100vw"
+              className="h-auto w-full opacity-90 mix-blend-multiply grayscale-[20%]"
+            />
+          </div>
         </div>
       )}
 
       <article className="mx-auto max-w-max-reading-width px-gutter pb-section-gap pt-section-gap">
         <header className="mb-12">
-          <h1 className="mb-6 font-display-lg text-journal-display-lg text-journal-primary">{article.title}</h1>
+          <h1 className="mb-6 break-words font-display-lg text-journal-display-lg text-journal-primary">
+            {article.title}
+          </h1>
           <div className="flex items-center gap-4 border-b border-t border-journal-outline-variant py-3 font-ui-meta text-journal-ui-meta uppercase tracking-wider text-journal-secondary">
             <span className="font-semibold text-journal-primary">By {article.author_name}</span>
             <span>•</span>
@@ -177,7 +207,7 @@ export default async function ArticlePage(props: PageProps<"/articles/[slug]">) 
         </header>
 
         <div
-          className="article-dropcap space-y-6 font-article-body text-journal-article-body [&_blockquote]:my-10 [&_blockquote]:border-l-2 [&_blockquote]:border-journal-primary-container [&_blockquote]:pl-6 [&_blockquote]:font-headline-lg [&_blockquote]:text-journal-headline-lg [&_blockquote]:italic [&_blockquote]:text-journal-primary [&_p]:mb-6"
+          className="article-dropcap break-words space-y-6 font-article-body text-journal-article-body [&_blockquote]:my-10 [&_blockquote]:border-l-2 [&_blockquote]:border-journal-primary-container [&_blockquote]:pl-6 [&_blockquote]:font-headline-lg [&_blockquote]:text-journal-headline-lg [&_blockquote]:italic [&_blockquote]:text-journal-primary [&_p]:mb-6"
           dangerouslySetInnerHTML={{ __html: safeBodyHtml }}
         />
 
@@ -220,7 +250,7 @@ export default async function ArticlePage(props: PageProps<"/articles/[slug]">) 
                     {item.tags[0] ?? "Essay"}
                     {item.published_at ? ` • ${formatShortDate(item.published_at)}` : ""}
                   </div>
-                  <h4 className="mb-4 line-clamp-2 font-headline-md text-journal-headline-md text-journal-on-surface transition-colors group-hover:text-journal-surface-tint">
+                  <h4 className="mb-4 line-clamp-2 break-words font-headline-md text-journal-headline-md text-journal-on-surface transition-colors group-hover:text-journal-surface-tint">
                     {item.title}
                   </h4>
                   <div className="border-b border-journal-outline-variant" />

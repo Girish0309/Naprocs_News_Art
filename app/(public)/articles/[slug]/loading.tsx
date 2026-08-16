@@ -4,7 +4,9 @@
 export default function ArticleLoading() {
   return (
     <>
-      <div className="shimmer-journal relative h-[320px] w-full sm:h-[420px] md:h-[614px] md:max-h-[600px]" />
+      <div className="mx-auto w-full max-w-[1440px] px-margin-safe pt-8 md:pt-12">
+        <div className="shimmer-journal aspect-video w-full rounded-xl" />
+      </div>
 
       <article className="mx-auto max-w-max-reading-width px-gutter pb-section-gap pt-section-gap">
         <div className="mb-12">

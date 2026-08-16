@@ -11,6 +11,7 @@ import { sanitizeArticleHtml } from "@/lib/sanitize";
 import { stripHtml } from "@/lib/article-text";
 import { getPublishValidationErrors, formatPublishValidationError } from "@/lib/article-publish-validation";
 import { SITE_URL as PUBLIC_BASE_URL } from "@/lib/site-config";
+import { withDbErrorHandling } from "@/lib/with-db-error-handling";
 
 const updateArticleSchema = z.object({
   title: z.string().min(1).optional(),
@@ -138,15 +139,15 @@ async function updateArticle(request: NextRequest, context: RouteContext<"/api/a
   });
 }
 
-export async function PUT(request: NextRequest, context: RouteContext<"/api/admin/articles/[id]">) {
+export const PUT = withDbErrorHandling((request: NextRequest, context: RouteContext<"/api/admin/articles/[id]">) => {
   return updateArticle(request, context);
-}
+});
 
-export async function PATCH(request: NextRequest, context: RouteContext<"/api/admin/articles/[id]">) {
+export const PATCH = withDbErrorHandling((request: NextRequest, context: RouteContext<"/api/admin/articles/[id]">) => {
   return updateArticle(request, context);
-}
+});
 
-export async function DELETE(_request: NextRequest, context: RouteContext<"/api/admin/articles/[id]">) {
+export const DELETE = withDbErrorHandling(async (_request: NextRequest, context: RouteContext<"/api/admin/articles/[id]">) => {
   const session = await getServerAuthSession();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -175,4 +176,4 @@ export async function DELETE(_request: NextRequest, context: RouteContext<"/api/
   }
 
   return NextResponse.json({ ok: true });
-}
+});

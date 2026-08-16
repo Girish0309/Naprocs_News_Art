@@ -4,6 +4,7 @@ import dbConnect from "@/lib/db";
 import Article from "@/models/Article";
 import { calculateReadTimeMinutes, deriveExcerpt } from "@/lib/article-text";
 import { pageParam, limitParam, boundedTextParam } from "@/lib/query-params";
+import { withDbErrorHandling } from "@/lib/with-db-error-handling";
 
 const DEFAULT_LIMIT = 6;
 
@@ -13,7 +14,7 @@ const querySchema = z.object({
   limit: limitParam(DEFAULT_LIMIT, 20),
 });
 
-export async function GET(request: NextRequest) {
+export const GET = withDbErrorHandling(async (request: NextRequest) => {
   const { searchParams } = request.nextUrl;
   const parsed = querySchema.safeParse(Object.fromEntries(searchParams));
   if (!parsed.success) {
@@ -52,4 +53,4 @@ export async function GET(request: NextRequest) {
     page,
     limit,
   });
-}
+});

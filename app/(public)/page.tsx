@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
-import dbConnect from "@/lib/db";
+import dbConnect, { DatabaseConnectionError } from "@/lib/db";
 import Article from "@/models/Article";
 import { calculateReadTimeMinutes, deriveExcerpt } from "@/lib/article-text";
 import HomeArticleList from "@/components/public/HomeArticleList";
 import type { ArticleRowData } from "@/components/public/ArticleRow";
+import DbErrorFallback from "@/components/public/DbErrorFallback";
 import { SITE_NAME, SITE_URL, SITE_TITLE, SITE_DESCRIPTION } from "@/lib/site-config";
 
 // SSG with a 60s time-based ISR fallback, on-demand-revalidated on publish (Module 5).
@@ -33,17 +34,27 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
-  await dbConnect();
+  let articles;
+  let total;
+  try {
+    await dbConnect();
 
-  const filter = { status: "published" as const };
-  const [articles, total] = await Promise.all([
-    Article.find(filter)
-      .sort({ published_at: -1 })
-      .limit(PAGE_SIZE)
-      .select("slug title author_name excerpt body_html tags cover_image published_at like_count")
-      .lean(),
-    Article.countDocuments(filter),
-  ]);
+    const filter = { status: "published" as const };
+    [articles, total] = await Promise.all([
+      Article.find(filter)
+        .sort({ published_at: -1 })
+        .limit(PAGE_SIZE)
+        .select("slug title author_name excerpt body_html tags cover_image published_at like_count")
+        .lean(),
+      Article.countDocuments(filter),
+    ]);
+  } catch (error) {
+    if (error instanceof DatabaseConnectionError) {
+      console.error("[homepage] failed to load articles:", error);
+      return <DbErrorFallback retryHref="/" />;
+    }
+    throw error;
+  }
 
   const initialArticles: ArticleRowData[] = articles.map((article) => ({
     slug: article.slug,

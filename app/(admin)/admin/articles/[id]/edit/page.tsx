@@ -1,10 +1,11 @@
 import { notFound } from "next/navigation";
 import mongoose from "mongoose";
 import { requireAdminSession } from "@/lib/auth";
-import dbConnect from "@/lib/db";
+import dbConnect, { DatabaseConnectionError } from "@/lib/db";
 import Article from "@/models/Article";
 import AdminShell from "@/components/admin/AdminShell";
 import ArticleForm from "@/components/admin/ArticleForm";
+import DbErrorFallback from "@/components/admin/DbErrorFallback";
 
 export default async function EditArticlePage(props: PageProps<"/admin/articles/[id]/edit">) {
   const session = await requireAdminSession();
@@ -14,10 +15,23 @@ export default async function EditArticlePage(props: PageProps<"/admin/articles/
     notFound();
   }
 
-  await dbConnect();
-  const article = await Article.findById(id).lean();
-  if (!article) {
-    notFound();
+  let article;
+  try {
+    await dbConnect();
+    article = await Article.findById(id).lean();
+    if (!article) {
+      notFound();
+    }
+  } catch (error) {
+    if (error instanceof DatabaseConnectionError) {
+      console.error(`[admin/articles/${id}/edit] failed to load:`, error);
+      return (
+        <AdminShell adminName={session.user.name}>
+          <DbErrorFallback retryHref={`/admin/articles/${id}/edit`} />
+        </AdminShell>
+      );
+    }
+    throw error;
   }
 
   return (
@@ -25,6 +39,7 @@ export default async function EditArticlePage(props: PageProps<"/admin/articles/
       <ArticleForm
         articleId={String(article._id)}
         initialTitle={article.title}
+        initialExcerpt={article.excerpt ?? ""}
         initialContent={article.body_json && Object.keys(article.body_json as object).length > 0 ? (article.body_json as object) : article.body_html}
         initialTags={article.tags}
         initialAuthorName={article.author_name || session.user.name}

@@ -6,6 +6,7 @@ import Reaction, { type ReactionType } from "@/models/Reaction";
 import { fingerprintFromRequest } from "@/lib/fingerprint";
 import { isSameOriginRequest } from "@/lib/csrf";
 import { rateLimit } from "@/lib/rate-limit";
+import { withDbErrorHandling } from "@/lib/with-db-error-handling";
 
 const reactSchema = z.object({
   type: z.enum(["like", "dislike"]),
@@ -100,7 +101,7 @@ async function applyReaction(
   }
 }
 
-export async function GET(request: NextRequest, context: RouteContext<"/api/articles/[id]/react">) {
+export const GET = withDbErrorHandling(async (request: NextRequest, context: RouteContext<"/api/articles/[id]/react">) => {
   const { id } = await context.params;
   await dbConnect();
 
@@ -119,9 +120,9 @@ export async function GET(request: NextRequest, context: RouteContext<"/api/arti
     dislike_count: article.dislike_count,
     reaction: reaction?.type ?? null,
   });
-}
+});
 
-export async function POST(request: NextRequest, context: RouteContext<"/api/articles/[id]/react">) {
+export const POST = withDbErrorHandling(async (request: NextRequest, context: RouteContext<"/api/articles/[id]/react">) => {
   // Same-origin check, not a token — no session exists here to bind a CSRF token to.
   // See lib/csrf.ts.
   if (!isSameOriginRequest(request)) {
@@ -166,4 +167,4 @@ export async function POST(request: NextRequest, context: RouteContext<"/api/art
     dislike_count: updated?.dislike_count ?? 0,
     reaction,
   });
-}
+});

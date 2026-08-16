@@ -9,6 +9,7 @@ import { stripHtml } from "@/lib/article-text";
 import { buildArticleTextSearch } from "@/lib/article-search";
 import { pageParam, limitParam, boundedTextParam } from "@/lib/query-params";
 import { getPublishValidationErrors, formatPublishValidationError } from "@/lib/article-publish-validation";
+import { withDbErrorHandling } from "@/lib/with-db-error-handling";
 
 const listQuerySchema = z.object({
   status: z.enum(["draft", "published"]).optional(),
@@ -42,7 +43,7 @@ const createArticleSchema = z.object({
     .optional(),
 });
 
-export async function GET(request: NextRequest) {
+export const GET = withDbErrorHandling(async (request: NextRequest) => {
   const session = await getServerAuthSession();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -96,9 +97,9 @@ export async function GET(request: NextRequest) {
     page,
     limit,
   });
-}
+});
 
-export async function POST(request: NextRequest) {
+export const POST = withDbErrorHandling(async (request: NextRequest) => {
   const session = await getServerAuthSession();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -137,4 +138,4 @@ export async function POST(request: NextRequest) {
   });
 
   return NextResponse.json({ article: { id: String(article._id), slug: article.slug } }, { status: 201 });
-}
+});

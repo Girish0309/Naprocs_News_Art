@@ -8,6 +8,7 @@ import { fingerprintFromRequest } from "@/lib/fingerprint";
 import { rateLimit } from "@/lib/rate-limit";
 import { checkForSpam } from "@/lib/spam-filter";
 import { isSameOriginRequest } from "@/lib/csrf";
+import { withDbErrorHandling } from "@/lib/with-db-error-handling";
 
 const createCommentSchema = z.object({
   author_name: z.string().trim().min(1, "Name is required.").max(60, "Name is too long."),
@@ -18,10 +19,10 @@ const createCommentSchema = z.object({
 const COMMENT_RATE_LIMIT = 5;
 const COMMENT_RATE_WINDOW = "15m";
 
-export async function GET(
+export const GET = withDbErrorHandling(async (
   request: NextRequest,
   context: RouteContext<"/api/articles/[id]/comments">
-) {
+) => {
   const { id } = await context.params;
   await dbConnect();
 
@@ -38,12 +39,12 @@ export async function GET(
       created_at: comment.created_at,
     })),
   });
-}
+});
 
-export async function POST(
+export const POST = withDbErrorHandling(async (
   request: NextRequest,
   context: RouteContext<"/api/articles/[id]/comments">
-) {
+) => {
   // No session to bind a CSRF token to (anonymous, fingerprint-only) — same-origin
   // check via Origin/Referer instead. See lib/csrf.ts for why this is the right
   // mechanism specifically for this endpoint.
@@ -113,4 +114,4 @@ export async function POST(
     },
     { status: 201 }
   );
-}
+});

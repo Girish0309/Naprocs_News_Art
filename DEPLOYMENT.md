@@ -49,6 +49,18 @@ blank placeholders only).
 | `UPSTASH_REDIS_REST_URL` | `lib/rate-limit.ts` | Same as local |
 | `UPSTASH_REDIS_REST_TOKEN` | `lib/rate-limit.ts` | Same as local |
 
+**`NEXTAUTH_URL` is more than an SEO/canonical-link value — it also gates real
+comment/like submissions.** `lib/csrf.ts`'s same-origin CSRF check for the two
+anonymous, session-less endpoints (`POST /api/articles/[id]/comments`,
+`POST /api/articles/[id]/react`) derives its expected origin from `SITE_URL`
+(`lib/site-config.ts`), which reads this same env var. Get it wrong here (typo,
+trailing slash, http instead of https, stale preview URL) and every real
+comment/like submitted from the actual live domain starts failing with
+`"Cross-site request blocked."` — a functional break, not a security hole (it
+fails closed), but a confusing one to debug without knowing this connection
+exists. Confirmed live during the final security audit: a mismatched `Origin`
+gets a clean 403, a matching one passes through correctly.
+
 **`NEXT_PUBLIC_SITE_URL` — do not set this.** The brief that prompted this
 deployment listed it alongside `NEXTAUTH_URL`, but it's not read anywhere in
 this codebase (confirmed by grep) — `lib/site-config.ts`'s `SITE_URL` (used by

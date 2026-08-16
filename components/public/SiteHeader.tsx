@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import Image from "next/image";
 import { Search, X, Menu } from "lucide-react";
 import { useSearchQuery } from "./SearchQueryContext";
 
@@ -162,6 +163,7 @@ export default function SiteHeader() {
             <Menu className="h-5 w-5" />
           </button>
           <Link href="/" className="flex items-center gap-4 transition-opacity hover:opacity-80">
+            <Image src="/logo.png" alt="The Journal Logo" width={40} height={40} className="object-contain" />
             <span className="font-display-lg text-journal-display-lg tracking-tight text-journal-primary">
               The Journal
             </span>
@@ -231,9 +233,12 @@ export default function SiteHeader() {
             }`}
           >
             <div className="mb-8 flex items-center justify-between">
-              <span className="font-display-lg text-journal-display-lg tracking-tight text-journal-primary">
-                The Journal
-              </span>
+              <div className="flex items-center gap-3">
+                <Image src="/logo.png" alt="The Journal Logo" width={32} height={32} className="object-contain" />
+                <span className="font-display-lg text-journal-display-lg tracking-tight text-journal-primary">
+                  The Journal
+                </span>
+              </div>
               <button
                 type="button"
                 onClick={closeNav}

@@ -51,6 +51,28 @@ describe("admin comments (/api/admin/comments)", () => {
     expect(invalidResponse.status).toBe(400);
   });
 
+  // T-059b — "all" returns every status together (the comment-scope expansion that
+  // added the admin console's All tab, giving admins a path to retroactively remove an
+  // already-visible, auto-approved comment — no such path existed before this).
+  it("GET status=all returns comments of every status, with article populated on each", async () => {
+    const { admin } = await createTestAdmin();
+    mockSession.mockResolvedValue(fakeSession(admin.id));
+    const article = await createTestArticle({ status: "published", title: "All-Status Test Article" });
+    await createTestComment(String(article._id), { status: "flagged", body: "flagged one" });
+    await createTestComment(String(article._id), { status: "visible", body: "visible one" });
+    await createTestComment(String(article._id), { status: "removed", body: "removed one" });
+
+    const response = await listComments(makeRequest("/api/admin/comments", { searchParams: { status: "all" } }));
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.comments).toHaveLength(3);
+    const statuses = body.comments.map((c: { status: string }) => c.status).sort();
+    expect(statuses).toEqual(["flagged", "removed", "visible"]);
+    for (const comment of body.comments) {
+      expect(comment.article).toEqual({ id: String(article._id), title: "All-Status Test Article", slug: article.slug });
+    }
+  });
+
   // T-060 (priority) — the exact Promise.all concurrent-request scenario from audit
   // finding 7.3, now a permanent regression test: two simultaneous PATCH requests
   // moving the same comment to "removed" must decrement comment_count exactly once,

@@ -5,6 +5,7 @@ import dbConnect from "@/lib/db";
 import { getServerAuthSession } from "@/lib/auth";
 import Comment, { type CommentDocument } from "@/models/Comment";
 import Article from "@/models/Article";
+import { withDbErrorHandling } from "@/lib/with-db-error-handling";
 
 const updateCommentSchema = z.object({
   comment_id: z.string().min(1),
@@ -12,10 +13,10 @@ const updateCommentSchema = z.object({
 });
 
 const listCommentsQuerySchema = z.object({
-  status: z.enum(["visible", "flagged", "removed"]).optional(),
+  status: z.enum(["visible", "flagged", "removed", "all"]).optional(),
 });
 
-export async function GET(request: NextRequest) {
+export const GET = withDbErrorHandling(async (request: NextRequest) => {
   const session = await getServerAuthSession();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -29,11 +30,14 @@ export async function GET(request: NextRequest) {
   await dbConnect();
 
   // Defaults to the moderation queue (flagged comments awaiting a decision), but
-  // accepts "visible"/"removed" too for an admin who wants to browse those. An
-  // out-of-enum value now 400s instead of silently falling back to "every status" —
-  // a tightening made during the Module 11 security pass (see its report).
+  // accepts "visible"/"removed" too for an admin who wants to browse those, and "all"
+  // for the admin console's "All Comments" tab — added because no path existed to
+  // retroactively remove an already-visible (auto-approved) comment; only flagged ones
+  // were ever reachable. An out-of-enum value still 400s instead of silently falling
+  // back to "every status" — the Module 11 security-pass tightening this preserves —
+  // "all" is a new explicit enum member, not a loosening of that validation.
   const status = parsedQuery.data.status ?? "flagged";
-  const filter: QueryFilter<CommentDocument> = { status };
+  const filter: QueryFilter<CommentDocument> = status === "all" ? {} : { status };
 
   const comments = await Comment.find(filter)
     .select("author_name body status flagged_reason created_at article_id")
@@ -57,9 +61,9 @@ export async function GET(request: NextRequest) {
       };
     }),
   });
-}
+});
 
-export async function PATCH(request: NextRequest) {
+export const PATCH = withDbErrorHandling(async (request: NextRequest) => {
   const session = await getServerAuthSession();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -112,4 +116,4 @@ export async function PATCH(request: NextRequest) {
   }
 
   return NextResponse.json({ ok: true });
-}
+});

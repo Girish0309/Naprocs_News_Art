@@ -1,7 +1,3 @@
-import dbConnect from "../lib/db";
-import Article from "../models/Article";
-import { stripHtml } from "../lib/article-text";
-
 // One-time migration: computes body_text (HTML-stripped plaintext, used by the search
 // text index — see models/Article.ts) for every article that existed before this
 // field did. New/edited articles get body_text written inline by the admin article
@@ -12,6 +8,14 @@ async function main() {
   } catch {
     // No .env.local present — assume env vars are already set in the shell.
   }
+
+  // Deliberately dynamic, not a static top-level import — see create-admin.ts's
+  // identical comment. lib/db.ts reads process.env.MONGODB_URI into a module-level
+  // constant at import time, which a static import would evaluate before
+  // loadEnvFile() above ever runs, silently capturing `undefined`.
+  const dbConnect = (await import("../lib/db")).default;
+  const Article = (await import("../models/Article")).default;
+  const { stripHtml } = await import("../lib/article-text");
 
   await dbConnect();
 

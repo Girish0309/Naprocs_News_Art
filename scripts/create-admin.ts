@@ -3,15 +3,6 @@ import { stdin, stdout } from "node:process";
 import bcrypt from "bcryptjs";
 import mongoose from "mongoose";
 import { z } from "zod";
-import dbConnect from "../lib/db";
-import Admin from "../models/Admin";
-import { MIN_PASSWORD_LENGTH } from "../lib/auth-constants";
-
-const inputSchema = z.object({
-  name: z.string().trim().min(1, "Name is required."),
-  email: z.string().trim().toLowerCase().email("Enter a valid email address."),
-  password: z.string().min(MIN_PASSWORD_LENGTH, `Password must be at least ${MIN_PASSWORD_LENGTH} characters.`),
-});
 
 async function main() {
   try {
@@ -19,6 +10,25 @@ async function main() {
   } catch {
     // No .env.local present — assume env vars are already set in the shell.
   }
+
+  // Deliberately dynamic: lib/db.ts reads process.env.MONGODB_URI into a module-level
+  // constant at import time. A static top-level import would evaluate that constant
+  // before loadEnvFile() above ever runs (ES module imports are hoisted regardless of
+  // where they appear in the source), silently capturing `undefined` and making
+  // dbConnect() fail with "Missing MONGODB_URI" for anyone relying on .env.local alone
+  // — exactly what README.md's own setup instructions tell people to do. Found live:
+  // this script was silently failing to create anything, with no visible error
+  // (process.exit(1) from the outer catch below never got to flush its console.error
+  // before the process ended). Importing after loadEnvFile() has run avoids it.
+  const dbConnect = (await import("../lib/db")).default;
+  const Admin = (await import("../models/Admin")).default;
+  const { MIN_PASSWORD_LENGTH } = await import("../lib/auth-constants");
+
+  const inputSchema = z.object({
+    name: z.string().trim().min(1, "Name is required."),
+    email: z.string().trim().toLowerCase().email("Enter a valid email address."),
+    password: z.string().min(MIN_PASSWORD_LENGTH, `Password must be at least ${MIN_PASSWORD_LENGTH} characters.`),
+  });
 
   const rl = createInterface({ input: stdin, output: stdout });
   const rawName = await rl.question("Admin name: ");

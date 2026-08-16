@@ -914,7 +914,7 @@ reconcile (0 vulnerabilities, matches Module 11's clean audit), `tsc --noEmit` a
   effect at `md`+ since the nav is `md:hidden` there regardless (only one in-flow
   child left, direction stops mattering).
 
-## Post-Launch — 2FA Removal (2026-08-16)
+## Post-Launch — 2FA Removal & 15-Minute Idle Session Timeout (2026-08-16)
 
 - **2FA/TOTP groundwork removed entirely, not just left inert.** It was always
   documented (Module 2/3/12) as "setup only, never enforced at login" — the login
@@ -930,3 +930,50 @@ reconcile (0 vulnerabilities, matches Module 11's clean audit), `tsc --noEmit` a
   needs it too; the comment now says so instead of going stale. No admin document had
   a populated `totp_secret` to migrate (feature was never actually paired with an
   authenticator by anyone) — confirmed before removing the field, not assumed.
+- **30-day flat JWT session replaced with a genuine 15-minute idle timeout**, at the
+  user's explicit request ("use username and password after 15 min of no use").
+  Researched NextAuth's actual JWT-strategy refresh behavior before implementing
+  (`ENGINEERING_STANDARDS.md` B9) rather than assuming `updateAge` would handle it —
+  it doesn't, for this app's architecture. Implemented as: `session.maxAge` set to
+  900 seconds (`SESSION_MAX_AGE_SECONDS`, `lib/auth-cookie-config.ts`), and `proxy.ts`
+  re-encoding + re-issuing the session cookie with a fresh 900-second window on every
+  authenticated `/admin/*` or `/api/admin/*` request (matcher extended from
+  `/admin/:path*` to include `/api/admin/:path*`, specifically so background autosave
+  `PATCH` traffic counts as activity — otherwise an actively-typing admin with the
+  editor's 30-second autosave running, but not navigating between admin pages, could
+  still be logged out mid-edit). `/api/admin/login`'s pre-flight route is excluded from
+  both the gate and the refresh, matching how `/admin/login` was already excluded —
+  it must stay reachable without a session. Unauthenticated requests to `/api/admin/*`
+  routes (other than login) pass through rather than redirect, preserving their
+  existing per-route 401 JSON behavior instead of handing `fetch()` callers an HTML
+  redirect. Added a `reason=idle-timeout` query param, set only when a stale session
+  cookie was actually present, distinguishing a real timeout from a first visit, so
+  the login page can show "You were signed out after 15 minutes of inactivity"
+  instead of a silent bounce.
+- **Real bug found and fixed while verifying the `reason=idle-timeout` param live**:
+  the first implementation gave the re-issued cookie's own browser-side `maxAge` the
+  same value as the JWT's cryptographic one. Once idle-expired, the *browser itself*
+  deletes a cookie past its own `maxAge` before the next request is even sent — so by
+  the time an idle-expired request reached `proxy.ts`, there was no cookie left to
+  inspect at all, and "just timed out" was indistinguishable from "never logged in."
+  Fixed by decoupling the two: the cookie's browser-side lifetime
+  (`SESSION_COOKIE_BROWSER_MAX_AGE_SECONDS`, 24h) is now deliberately much longer than
+  the JWT's own `exp` claim (`SESSION_MAX_AGE_SECONDS`, 15 min) — the browser keeps
+  sending the (now-cryptographically-invalid) cookie, `getToken()`'s `decode()` still
+  correctly rejects it the instant its real `exp` passes, and `proxy.ts` can now tell
+  the two cases apart without weakening the actual 15-minute security boundary at all.
+- **Verified live against a real running dev server**, not just typechecked: wrote a
+  temporary Playwright spec (deleted after, never committed) reusing the existing E2E
+  harness's isolated port/DB, and temporarily set `SESSION_MAX_AGE_SECONDS` to 8
+  seconds for the duration of this check only (a real 15-minute wait would prove
+  nothing an 8-second one doesn't, for a pure timing mechanism) — confirmed (1) zero
+  activity for longer than the window redirects to `/admin/login` with
+  `reason=idle-timeout` and the inactivity notice renders, and (2) real activity
+  spaced well under the window, repeated for a total duration several times longer
+  than the window itself, never triggers a redirect. Also discovered live that
+  `next-auth/jwt`'s `decode()` bakes in a 15-second `jose` `clockTolerance` — negligible
+  against the real 900-second window (order of 1.7%), but large enough relative to the
+  8-second test value that the first verification attempt (an 11-second wait) falsely
+  looked like the session hadn't expired; widening the wait past `maxAge +
+  clockTolerance` resolved it. Reverted `SESSION_MAX_AGE_SECONDS` to 900 before
+  committing.

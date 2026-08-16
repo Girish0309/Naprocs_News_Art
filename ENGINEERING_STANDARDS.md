@@ -173,6 +173,23 @@ are genuinely different threat models that are easy to conflate.
 protection explicitly reasoned through and documented — never assumed to be "covered"
 by whatever protects the authenticated routes, since it isn't the same mechanism.
 
+### B9 — Never assume a library's documented refresh/update mechanism actually fires in this app's specific call pattern — trace the real call sites first
+**Why:** Implementing the 15-minute idle-session timeout (post-launch), it would have
+been easy to just set `session.updateAge` and assume NextAuth's built-in JWT-session
+refresh handled the rest, the way its own docs describe. Reading the actual installed
+source (`node_modules/next-auth/core/routes/session.js`) showed `updateAge` is *only*
+consulted in the database-adapter branch — the JWT branch this app uses ignores it
+entirely, and even its own unconditional-refresh path only runs from the
+`/api/auth/session` route, which nothing in this app (no `SessionProvider`/
+`useSession()` anywhere, and `getServerAuthSession()` always calls `getServerSession()`
+with 0 args, which no-ops cookie writes) ever calls. The session cookie was never being
+refreshed at all, by anything, under any config — a config-only fix would have shipped
+silently broken.
+**Rule:** When a feature depends on a library "refreshing," "syncing," or "re-issuing"
+something automatically, trace the actual code path this app's specific usage pattern
+takes through that library's source before relying on it — a documented mechanism that
+exists in the library is not the same as one that's reachable from how this app calls it.
+
 ---
 
 ## PROCESS RULES

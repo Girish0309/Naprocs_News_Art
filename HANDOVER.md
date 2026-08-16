@@ -13,6 +13,27 @@ search, comments, reactions) and a private admin console (article editor with
 autosave/publish, comment moderation, dashboard). Not a scaffold — see `README.md`'s
 folder structure for what's actually implemented.
 
+## Session behavior
+
+Admin sessions are a genuine 15-minute **idle** timeout, not a flat expiry from login
+(`SESSION_MAX_AGE_SECONDS` in `lib/auth-cookie-config.ts`). This matters because
+NextAuth's own JWT-session refresh never fires in this app's architecture — no
+`SessionProvider`/`useSession()` exists anywhere, and `getServerAuthSession()` always
+calls `getServerSession()` with 0 args, which NextAuth internally no-ops cookie writes
+for. So `proxy.ts` does the refreshing itself: every authenticated request to
+`/admin/*` or `/api/admin/*` (except the login page/pre-flight route) re-encodes and
+re-issues the session cookie with a fresh 15-minute window via `next-auth/jwt`'s
+`encode()`. Real activity — including background autosave `PATCH` calls, not just
+page navigation — keeps a session alive; only genuine inactivity past 15 minutes lets
+it actually expire, redirecting to `/admin/login?reason=idle-timeout`, which the login
+page reads to show "You were signed out after 15 minutes of inactivity." See
+`ENGINEERING_STANDARDS.md` B9 for why this needed custom logic rather than a config
+value. The re-issued cookie's own browser-side lifetime
+(`SESSION_COOKIE_BROWSER_MAX_AGE_SECONDS`, 24h) is deliberately much longer than the
+JWT's cryptographic one — otherwise the browser deletes an idle-expired cookie itself
+before the redirect logic ever sees it, and the `reason=idle-timeout` param silently
+stops working (found live; see `DEVIATIONS.md`'s Post-Launch entry).
+
 ## Known limitations, right now
 
 Checked against `DEVIATIONS.md` and `DEPLOYMENT.md` §7 rather than assumed current:

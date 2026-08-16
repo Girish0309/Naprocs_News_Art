@@ -5,7 +5,12 @@ import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 import dbConnect from "@/lib/db";
 import Admin from "@/models/Admin";
-import { sessionCookieName, useSecureCookies } from "@/lib/auth-cookie-config";
+import {
+  sessionCookieName,
+  sessionCookieOptions,
+  SESSION_MAX_AGE_SECONDS,
+  useSecureCookies,
+} from "@/lib/auth-cookie-config";
 import { getClientIp } from "@/lib/get-client-ip";
 import { rateLimit } from "@/lib/rate-limit";
 
@@ -15,17 +20,15 @@ import { rateLimit } from "@/lib/rate-limit";
 const DUMMY_PASSWORD_HASH = "$2b$10$CwTycUXWue0Thq9StjUM0uJ8Y6c2rl2Vc0z1yGxTBu1zM6oR8U7CO";
 
 export const authOptions: NextAuthOptions = {
-  session: { strategy: "jwt" },
+  // maxAge bounds a single token's lifetime; it's proxy.ts's sliding refresh (see
+  // auth-cookie-config.ts) that turns this into a real 15-minute *idle* timeout
+  // instead of a flat one, since NextAuth never refreshes this cookie on its own here.
+  session: { strategy: "jwt", maxAge: SESSION_MAX_AGE_SECONDS },
   useSecureCookies,
   cookies: {
     sessionToken: {
       name: sessionCookieName,
-      options: {
-        httpOnly: true,
-        sameSite: "strict",
-        path: "/",
-        secure: useSecureCookies,
-      },
+      options: sessionCookieOptions,
     },
   },
   pages: {

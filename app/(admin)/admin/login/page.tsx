@@ -2,11 +2,18 @@ import { redirect } from "next/navigation";
 import { getServerAuthSession } from "@/lib/auth";
 import LoginForm from "@/components/admin/LoginForm";
 
-export default async function AdminLoginPage() {
+export default async function AdminLoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ reason?: string }>;
+}) {
   const session = await getServerAuthSession();
   if (session) {
     redirect("/admin/dashboard");
   }
+
+  const { reason } = await searchParams;
+  const loggedOutForInactivity = reason === "idle-timeout";
 
   return (
     <div className="paper-grain flex h-full min-h-screen items-center justify-center p-md text-admin-on-surface">
@@ -19,6 +26,11 @@ export default async function AdminLoginPage() {
             Sign in to the author console.
           </p>
         </div>
+        {loggedOutForInactivity && (
+          <p className="mb-md rounded border border-admin-outline-variant bg-admin-surface-container-low px-sm py-sm font-ui-label-sm text-admin-ui-label-sm text-admin-on-surface-variant">
+            You were signed out after 15 minutes of inactivity. Please sign in again.
+          </p>
+        )}
         <LoginForm />
         <div className="mt-lg border-t border-admin-outline-variant pt-md text-center">
           <p className="font-ui-label-sm text-admin-ui-label-sm text-admin-on-surface-variant">

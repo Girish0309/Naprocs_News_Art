@@ -5,8 +5,7 @@ import mongoose from "mongoose";
 import { z } from "zod";
 import dbConnect from "../lib/db";
 import Admin from "../models/Admin";
-
-const MIN_PASSWORD_LENGTH = 8;
+import { MIN_PASSWORD_LENGTH } from "../lib/auth-constants";
 
 const inputSchema = z.object({
   name: z.string().trim().min(1, "Name is required."),

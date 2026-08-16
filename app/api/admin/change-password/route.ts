@@ -6,8 +6,7 @@ import { getServerAuthSession } from "@/lib/auth";
 import { rateLimit } from "@/lib/rate-limit";
 import Admin from "@/models/Admin";
 import { withDbErrorHandling } from "@/lib/with-db-error-handling";
-
-const MIN_PASSWORD_LENGTH = 8;
+import { MIN_PASSWORD_LENGTH } from "@/lib/auth-constants";
 
 const changePasswordSchema = z.object({
   current_password: z.string().min(1, "Current password is required."),
@@ -53,7 +52,12 @@ export const POST = withDbErrorHandling(async (request: NextRequest) => {
     return NextResponse.json({ error: "Current password is incorrect." }, { status: 400 });
   }
 
-  admin.password_hash = await bcrypt.hash(parsed.data.new_password, 10);
+  // Matches scripts/create-admin.ts's cost factor — was 10 here, a drift from that
+  // file's 12, not a deliberate choice. Existing password_hash values created at cost
+  // 10 keep verifying correctly regardless (bcrypt hashes are self-describing, the
+  // cost factor is stored in the hash itself); only hashes created from this point
+  // forward use 12.
+  admin.password_hash = await bcrypt.hash(parsed.data.new_password, 12);
   await admin.save();
 
   return NextResponse.json({ ok: true });

@@ -2,8 +2,7 @@
 
 import { useId, useState } from "react";
 import { KeyRound, ShieldCheck, Globe } from "lucide-react";
-
-const MIN_PASSWORD_LENGTH = 8;
+import { MIN_PASSWORD_LENGTH } from "@/lib/auth-constants";
 
 type TwoFactorSetup = { secret: string; otpauthUrl: string; qrCodeDataUrl: string };
 

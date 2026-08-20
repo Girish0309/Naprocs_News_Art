@@ -49,12 +49,6 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
             >
               Contact
             </Link>
-            <Link
-              href="#"
-              className="font-ui-meta text-journal-ui-meta uppercase text-journal-on-secondary-container decoration-1 transition-colors hover:text-journal-primary focus:underline"
-            >
-              RSS
-            </Link>
           </nav>
         </div>
       </footer>

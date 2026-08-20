@@ -7,6 +7,13 @@ import Comment, { type CommentDocument } from "@/models/Comment";
 import Article from "@/models/Article";
 import { withDbErrorHandling } from "@/lib/with-db-error-handling";
 
+// Explicit, not left to Next.js's implicit "reads a cookie -> opt out of caching"
+// detection (which is what was relying on getServerAuthSession()'s cookie read here
+// before this). That implicit behavior is exactly the kind of thing that can silently
+// regress across a Next.js version bump or a refactor that changes how the session is
+// read — matches the existing precedent at app/sitemap.ts for the same reason.
+export const dynamic = "force-dynamic";
+
 const updateCommentSchema = z.object({
   comment_id: z.string().min(1),
   status: z.enum(["visible", "flagged", "removed"]),

@@ -20,20 +20,41 @@ const SITE_ORIGIN = new URL(SITE_URL).origin;
  * check would be redundant there, and isn't a substitute for it anyway, since it says
  * nothing about *who* is asking, only *where from*.
  */
+// Server-log-only diagnostics for a rejection — never returned to the client (the
+// route handlers that call isSameOriginRequest() only ever send back a generic
+// "Cross-site request blocked", by design, since telling a caller exactly why would
+// help an actual forger calibrate their request). This exists because an env var
+// mismatch (NEXTAUTH_URL not matching the real deployed domain after a redeploy or
+// domain change) produces the exact same generic rejection as a real forged request,
+// with nothing to distinguish the two from the client's point of view — this is the
+// only place that distinction is visible at all.
+function logRejection(request: NextRequest, receivedOrigin: string | null, receivedReferer: string | null): void {
+  console.error(
+    `[csrf] Rejected ${request.method} ${request.nextUrl.pathname} — expected origin "${SITE_ORIGIN}" (from SITE_URL/NEXTAUTH_URL), received Origin: ${receivedOrigin ?? "(none)"}, Referer: ${receivedReferer ?? "(none)"}`
+  );
+}
+
 export function isSameOriginRequest(request: NextRequest): boolean {
   const origin = request.headers.get("origin");
+  const referer = request.headers.get("referer");
+
   if (origin) {
-    return origin === SITE_ORIGIN;
+    const matches = origin === SITE_ORIGIN;
+    if (!matches) logRejection(request, origin, referer);
+    return matches;
   }
 
-  const referer = request.headers.get("referer");
   if (referer) {
     try {
-      return new URL(referer).origin === SITE_ORIGIN;
+      const matches = new URL(referer).origin === SITE_ORIGIN;
+      if (!matches) logRejection(request, origin, referer);
+      return matches;
     } catch {
+      logRejection(request, origin, referer);
       return false;
     }
   }
 
+  logRejection(request, origin, referer);
   return false;
 }

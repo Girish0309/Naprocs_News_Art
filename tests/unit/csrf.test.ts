@@ -5,7 +5,11 @@ import { isSameOriginRequest } from "@/lib/csrf";
 // T-084, T-085, T-086, T-087. SITE_ORIGIN is derived from NEXTAUTH_URL
 // (http://localhost:3000 — see tests/setup/global-setup.ts), matched here directly.
 function requestWith(headers: Record<string, string>): NextRequest {
-  return { headers: new Headers(headers) } as NextRequest;
+  return {
+    headers: new Headers(headers),
+    method: "POST",
+    nextUrl: new URL("http://localhost:3000/api/articles/some-id/react"),
+  } as NextRequest;
 }
 
 describe("isSameOriginRequest", () => {

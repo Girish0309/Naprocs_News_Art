@@ -8,13 +8,6 @@ import { useSearchQuery } from "./SearchQueryContext";
 const LIMIT = 6;
 const SEARCH_DEBOUNCE_MS = 300;
 
-// Every 3rd row (index 2, 5, 8, ...) uses the text-only "feature" variant, matching
-// the mockup's rhythm — its one demo instance is the 3rd article. Reused for search
-// results too, so results look like the same listing, not a separate UI.
-function variantFor(index: number): "standard" | "feature" {
-  return (index + 1) % 3 === 0 ? "feature" : "standard";
-}
-
 export default function HomeArticleList({
   initialArticles,
   initialTotal,
@@ -97,8 +90,8 @@ export default function HomeArticleList({
           </div>
         ) : (
           <div className="flex flex-col">
-            {(searchResults ?? []).map((article, index) => (
-              <ArticleRow key={article.slug} article={article} variant={variantFor(index)} />
+            {(searchResults ?? []).map((article) => (
+              <ArticleRow key={article.slug} article={article} />
             ))}
           </div>
         )}
@@ -115,8 +108,8 @@ export default function HomeArticleList({
         </div>
       ) : (
         <div className="flex flex-col">
-          {articles.map((article, index) => (
-            <ArticleRow key={article.slug} article={article} variant={variantFor(index)} />
+          {articles.map((article) => (
+            <ArticleRow key={article.slug} article={article} />
           ))}
         </div>
       )}

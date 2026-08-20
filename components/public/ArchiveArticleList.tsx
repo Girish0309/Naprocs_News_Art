@@ -51,11 +51,8 @@ export default function ArchiveArticleList({
         </div>
       ) : (
         <div className="flex flex-col">
-          {/* Always the "standard" row variant, unlike the homepage's every-3rd "feature"
-              rhythm — the Archive's job is scanning the full catalog quickly, not editorial
-              pacing, so a uniform row shape suits it better. */}
           {articles.map((article) => (
-            <ArticleRow key={article.slug} article={article} variant="standard" />
+            <ArticleRow key={article.slug} article={article} />
           ))}
         </div>
       )}

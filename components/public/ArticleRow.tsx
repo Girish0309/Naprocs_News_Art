@@ -19,13 +19,9 @@ function formatShortDate(value: string | Date | null): string {
   return new Date(value).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
-function Meta({ tags, readTimeMinutes, center }: { tags: string[]; readTimeMinutes: number; center?: boolean }) {
+function Meta({ tags, readTimeMinutes }: { tags: string[]; readTimeMinutes: number }) {
   return (
-    <div
-      className={`mb-3 flex items-center gap-2 font-ui-meta text-journal-ui-meta uppercase tracking-wider text-journal-secondary ${
-        center ? "justify-center" : ""
-      }`}
-    >
+    <div className="mb-3 flex items-center gap-2 font-ui-meta text-journal-ui-meta uppercase tracking-wider text-journal-secondary">
       <span>{tags[0] ?? "Essay"}</span>
       <span className="h-1 w-1 rounded-full bg-journal-outline-variant" />
       <span>{readTimeMinutes} Min Read</span>
@@ -33,36 +29,7 @@ function Meta({ tags, readTimeMinutes, center }: { tags: string[]; readTimeMinut
   );
 }
 
-/**
- * Two visual variants from the mockup: a standard image-left/text-right row, and a
- * text-only, centered "feature" row used every 3rd item so the listing doesn't feel
- * monotonous (design-reference/user/homepage.html's "Silence as a Radical Act" row).
- */
-export default function ArticleRow({ article, variant }: { article: ArticleRowData; variant: "standard" | "feature" }) {
-  if (variant === "feature") {
-    return (
-      <Link
-        href={`/articles/${article.slug}`}
-        className="group -mx-4 flex cursor-pointer flex-col rounded-lg border-t border-journal-outline-variant bg-journal-surface-container-lowest px-4 py-12 transition-colors duration-300 hover:bg-journal-surface-container-low"
-      >
-        <div className="mx-auto flex w-full min-w-0 max-w-xl flex-grow flex-col items-stretch justify-center text-center">
-          <Meta tags={article.tags} readTimeMinutes={article.read_time_minutes} center />
-          <h2 className="mb-6 break-words font-display-lg text-journal-display-lg leading-tight text-journal-on-surface transition-colors group-hover:text-journal-primary-container">
-            {article.title}
-          </h2>
-          <p className="mb-8 break-words font-article-body text-journal-article-body text-journal-secondary">
-            {article.excerpt}
-          </p>
-          <div className="flex items-center justify-center gap-6 font-ui-meta text-journal-ui-meta text-journal-on-surface-variant">
-            <span className="font-semibold text-journal-on-surface">{article.author_name}</span>
-            <span className="text-journal-outline-variant">|</span>
-            <span>{formatShortDate(article.published_at)}</span>
-          </div>
-        </div>
-      </Link>
-    );
-  }
-
+export default function ArticleRow({ article }: { article: ArticleRowData }) {
   return (
     <Link
       href={`/articles/${article.slug}`}

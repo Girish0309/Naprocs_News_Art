@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Compass } from "lucide-react";
+import { SITE_NAME } from "@/lib/site-config";
 
 // Rendered inside (public)/layout.tsx (header/footer stay mounted) whenever
 // notFound() fires from within this route group — e.g. a bad or unpublished
@@ -17,7 +18,7 @@ export default function PublicNotFound() {
         href="/"
         className="rounded-full border border-journal-outline px-8 py-3 font-ui-label-lg text-journal-ui-label-lg text-journal-primary transition-colors duration-300 hover:bg-journal-primary-container hover:text-journal-on-primary focus:outline-none focus:ring-2 focus:ring-journal-primary"
       >
-        Back to The Journal
+        Back to {SITE_NAME}
       </Link>
     </div>
   );

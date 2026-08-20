@@ -1,7 +1,7 @@
 import type { Config } from "tailwindcss";
 
 // Design tokens extracted from /design-reference (Stitch-exported mockups).
-// Admin ("The Editorial") and user-site ("The Journal") are intentionally distinct
+// Admin ("The Editorial") and user-site ("The Convergence") are intentionally distinct
 // skins — same key names (primary, on-surface, etc.) resolve to different values,
 // so they're namespaced under `admin-*` / `journal-*` rather than merged. Spacing and
 // fontFamily don't have colliding values between the two, so those stay flat/shared.
@@ -151,6 +151,13 @@ const journalFontSize: Record<string, FontSizeValue> = {
   "ui-label-lg": ["0.875rem", { lineHeight: "1.2", letterSpacing: "0.05em", fontWeight: "600" }],
   "headline-md": ["1.5rem", { lineHeight: "1.3", fontWeight: "600" }],
   "display-lg": ["clamp(2.5rem, 8vw, 4rem)", { lineHeight: "1.1", letterSpacing: "-0.02em", fontWeight: "700" }],
+  // Distinct from display-lg on purpose: the header wordmark shares its row with the
+  // menu button and search control (page h1s like "Perspectives" don't), so it needs
+  // its own smaller floor. Confirmed live, not assumed: display-lg's 2.5rem/40px
+  // minimum still overflows the header at 320px even text-only, no icon involved —
+  // "The Convergence" alone is long enough to need a smaller floor than "The Journal"
+  // ever did.
+  "brand-mark": ["clamp(1.375rem, 4.5vw, 1.875rem)", { lineHeight: "1.1", letterSpacing: "-0.01em", fontWeight: "700" }],
   "ui-meta": ["0.75rem", { lineHeight: "1.4", fontWeight: "400" }],
   "headline-lg": ["clamp(1.75rem, 5vw, 2.5rem)", { lineHeight: "1.2", letterSpacing: "-0.01em", fontWeight: "600" }],
   "ui-label-md": ["0.8125rem", { lineHeight: "1.4", fontWeight: "400" }],
@@ -197,7 +204,7 @@ const config: Config = {
         "container-max": "1280px",
         "article-max": "680px",
         sm: "12px",
-        // Journal ("The Journal") — no key overlap with the above
+        // Journal ("The Convergence") — no key overlap with the above
         "max-reading-width": "680px",
         "section-gap": "5rem",
         "margin-safe": "2rem",

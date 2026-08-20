@@ -154,10 +154,12 @@ export default async function ArticlePage(props: PageProps<"/articles/[slug]">) 
     datePublished: publishedAtIso,
     dateModified: toIsoStringOrUndefined(article.updated_at) ?? publishedAtIso,
     author: { "@type": "Person", name: article.author_name },
+    // No logo field — omitted rather than pointed at a placeholder that doesn't
+    // exist. logo is optional on Organization; a broken image URL in structured
+    // data is worse than not claiming one at all.
     publisher: {
       "@type": "Organization",
       name: SITE_NAME,
-      logo: { "@type": "ImageObject", url: `${SITE_URL}/logo.png` },
     },
   };
 

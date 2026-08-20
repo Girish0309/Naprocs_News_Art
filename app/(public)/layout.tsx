@@ -28,7 +28,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
       <footer className="mt-auto w-full border-t border-journal-outline-variant bg-journal-surface">
         <div className="mx-auto flex w-full max-w-max-reading-width flex-col items-center justify-between gap-8 px-margin-safe py-section-gap md:flex-row">
           <p className="font-ui-meta text-journal-ui-meta text-journal-secondary">
-            © {new Date().getFullYear()} The Journal Editorial. All rights reserved.
+            © {new Date().getFullYear()} {SITE_NAME} Editorial. All rights reserved.
           </p>
           <nav className="flex gap-6">
             <Link

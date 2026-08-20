@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Search, X, Menu } from "lucide-react";
 import { useSearchQuery } from "./SearchQueryContext";
+import { SITE_NAME } from "@/lib/site-config";
 
 const TRANSITION_MS = 300;
 
@@ -161,9 +162,9 @@ export default function SiteHeader() {
           >
             <Menu className="h-5 w-5" />
           </button>
-          <Link href="/" className="flex items-center gap-4 transition-opacity hover:opacity-80">
-            <span className="font-display-lg text-journal-display-lg tracking-tight text-journal-primary">
-              The Journal
+          <Link href="/" className="flex items-center transition-opacity hover:opacity-80">
+            <span className="font-display-lg text-journal-brand-mark tracking-tight text-journal-primary">
+              {SITE_NAME}
             </span>
           </Link>
         </div>
@@ -231,8 +232,8 @@ export default function SiteHeader() {
             }`}
           >
             <div className="mb-8 flex items-center justify-between">
-              <span className="font-display-lg text-journal-display-lg tracking-tight text-journal-primary">
-                The Journal
+              <span className="flex items-center font-display-lg text-journal-brand-mark tracking-tight text-journal-primary">
+                {SITE_NAME}
               </span>
               <button
                 type="button"
